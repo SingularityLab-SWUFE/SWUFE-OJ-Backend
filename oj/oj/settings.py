@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework.authtoken',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -74,10 +76,22 @@ WSGI_APPLICATION = 'oj.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default':{
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'singularity',
+        'USER': 'admin',
+        'PASSWORD': 'admin',
+        'HOST': '129.226.145.95',
+        'PORT': '3306',
+    },
+    'test': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'test_db',
+        'USER': 'admin',
+        'PASSWORD': 'admin',
+        'HOST': '129.226.145.95',
+        'PORT': '3306',
+    },
 }
 
 
@@ -121,3 +135,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
