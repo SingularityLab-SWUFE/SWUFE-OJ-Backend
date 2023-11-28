@@ -1,15 +1,17 @@
 from rest_framework import serializers
-from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.models import User
+
+from .models import UserProfile
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "username"]
+        fields = ["id", "username"]
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -24,10 +26,10 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'password', 'password2',
-                  'email', 'first_name', 'last_name')
+                  'email')
         extra_kwargs = {
-            'first_name': {'required': True},
-            'last_name': {'required': True}
+            'username': {'required': True},
+            'email': {'required': True},
         }
 
     def validate(self, attrs):
@@ -40,9 +42,45 @@ class RegisterSerializer(serializers.ModelSerializer):
         user = User.objects.create(
             username=validated_data['username'],
             email=validated_data['email'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
         )
         user.set_password(validated_data['password'])
         user.save()
+
+        UserProfile.objects.create(user=user)
+
         return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = ["real_name", "blog", "github",
+                  "school", "major", "language", "username", "email"]
+
+    def get_username(self, obj):
+        return obj.username
+
+    def get_email(self, obj):
+        return obj.email
+
+
+class EditUserProfileSerializer(serializers.ModelSerializer):
+    real_name = serializers.CharField(
+        max_length=32, allow_null=True, required=False)
+    blog = serializers.URLField(
+        max_length=256, allow_blank=True, required=False)
+    github = serializers.URLField(
+        max_length=256, allow_blank=True, required=False)
+    school = serializers.CharField(
+        max_length=64, allow_blank=True, required=False)
+    major = serializers.CharField(
+        max_length=64, allow_blank=True, required=False)
+    language = serializers.CharField(
+        max_length=32, allow_blank=True, required=False)
+
+    class Meta:
+        model = UserProfile
+        fields = ["real_name", "blog", "github", "school", "major", "language"]
