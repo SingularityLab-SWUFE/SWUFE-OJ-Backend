@@ -4,7 +4,18 @@ import base64
 import re
 import json
 import time
+import os
+import sys
+import django
 from bs4 import BeautifulSoup
+
+sys.path.append('..')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'oj.settings')
+django.setup()
+
+from problem.serializers import ProblemSerializer
+from problem.models import Problem, ProblemTag
+
 
 # Default headers
 headers = {
@@ -74,7 +85,7 @@ def submit(code, p_id, lang, cookies):
     return response
 
 
-def get_problem_info(pid):
+def get_problem_info(pid, write=True, overwrite=False):
     '''
         获取题目信息
     '''
@@ -87,74 +98,99 @@ def get_problem_info(pid):
     output_sample = ""
     source = ""
     author = ""
+    hint = ""
+    problem_data = Problem.objects.filter(remote_id=pid, source="HDU").first()
 
-    delimiter = ["Problem Description", "Input",
-                 "Output", "Sample Input", "Sample Output", "Source", "Author"]
+    if problem_data is None or overwrite:
+        delimiter = ["Problem Description", "Input",
+                     "Output", "Sample Input", "Sample Output", "Source", "Author", "Hint"]
 
-    response = get('https://acm.hdu.edu.cn/showproblem.php', para={'pid': pid})
-    html_data = response.text.replace("<br>", '\n')
-    soup = BeautifulSoup(html_data, 'html.parser')
-    cleaned_soup = soup.find_all(
-        'td', attrs={'align': 'center'})
-    # 题目名称
-    title = soup.find('h1', style="color:#1A5CC8").get_text(strip=True)
-    # HDU 的提交信息
-    submission_info = soup.find(
-        'span', style='font-family:Arial;font-size:12px;font-weight:bold;color:green').get_text(strip=True)
-    submission_statistics = re.findall(
-        r'\d+', submission_info)
+        response = get('https://acm.hdu.edu.cn/showproblem.php',
+                       para={'pid': pid})
+        # 将 <br> 转写成 \n
+        html_data = response.text.replace("<br>", '\n')
+        soup = BeautifulSoup(html_data, 'html.parser')
+        cleaned_soup = soup.find_all(
+            'td', attrs={'align': 'center'})
+        # 题目名称
+        title = soup.find('h1', style="color:#1A5CC8").get_text(strip=True)
+        # HDU 的提交信息
+        submission_info = soup.find(
+            'span', style='font-family:Arial;font-size:12px;font-weight:bold;color:green').get_text(strip=True)
+        submission_statistics = re.findall(
+            r'\d+', submission_info)
 
-    rich_text, cur = "", ""
-    for s in cleaned_soup:
-        # s: bs4.element.Tag
-        for tag in s.find_all(['div', 'img']):
-            # 获取全部 div 标签
-            # 带 class 防止样例部分重复获取子标签
-            if tag.name == 'div' and 'class' in tag.attrs:
-                rich_text = tag.get_text()
-            # 提取正文图片的地址
-            # 可能以后会把图片存到自己的数据库里
-            elif tag.name == 'img' and 'style' in tag.attrs:
-                rich_text = str(tag).replace(
-                    '../../..', 'https://acm.hdu.edu.cn')
-                # img_name = re.search(r'/([^/]+)$', tag['src']).group(1)
-                # img_src = f"https://acm.hdu.edu.cn/data/images/{img_name}"
-            else:
-                continue
+        rich_text, cur = "", ""
+        for s in cleaned_soup:
+            # s: bs4.element.Tag
+            for tag in s.find_all(['div', 'img']):
+                # 获取全部 div 标签
+                # 带 class 防止样例部分重复获取子标签
+                if tag.name == 'div' and 'class' in tag.attrs:
+                    rich_text = tag.get_text()
+                # 提取正文图片的地址
+                # 可能以后会把图片存到自己的数据库里
+                elif tag.name == 'img' and 'style' in tag.attrs:
+                    img_name = re.search(r'/([^/]+)$', tag['src']).group(1)
+                    img_src = f"https://acm.hdu.edu.cn/data/images/{img_name}"
+                    rich_text = f'<img style="max-width:100%;" src="{
+                        img_src}">'
+                else:
+                    continue
 
-            if rich_text in delimiter:
-                cur = rich_text
-            else:
-                if cur == delimiter[0]:
-                    problem_description += rich_text
-                elif cur == delimiter[1]:
-                    input_description += rich_text
-                elif cur == delimiter[2]:
-                    output_description += rich_text
-                elif cur == delimiter[3]:
-                    input_sample += rich_text
-                elif cur == delimiter[4]:
-                    output_sample += rich_text
-                elif cur == delimiter[5]:
-                    source += rich_text
-                elif cur == delimiter[6]:
-                    author += rich_text
+                if rich_text in delimiter:
+                    cur = rich_text
+                else:
+                    if cur == delimiter[0]:
+                        problem_description += rich_text
+                    elif cur == delimiter[1]:
+                        input_description += rich_text
+                    elif cur == delimiter[2]:
+                        output_description += rich_text
+                    elif cur == delimiter[3]:
+                        input_sample += rich_text
+                    elif cur == delimiter[4]:
+                        output_sample += rich_text
+                    elif cur == delimiter[5]:
+                        source += rich_text
+                    elif cur == delimiter[6]:
+                        author += rich_text
+                    elif cur == delimiter[6]:
+                        hint += rich_text
 
-    # HDU 只有一个 sample
-    samples = [{"input": input_sample, "output": output_sample}]
-    data_dict = {
-        "title": title,
-        "submission_statistics": submission_statistics,
-        "problem_description": problem_description,
-        "input_description": input_description,
-        "output_description": output_description,
-        "samples": samples,
-        "source": source,
-        "author": author
-    }
-    json_data = json.dumps(data_dict, indent=4)
-
-    return json_data
+        # HDU 只有一个 sample
+        samples = [{"input": input_sample, "output": output_sample}]
+        data_dict = {
+            "title": title,
+            "submission_statistics": submission_statistics,
+            "problem_description": problem_description,
+            "input_description": input_description,
+            "output_description": output_description,
+            "samples": samples,
+            "source": source,
+            "author": author,
+            "hint": hint
+        }
+        json_data = json.dumps(data_dict, indent=4)
+        if write and problem_data == None:
+            problem_data = Problem(title=title, is_remote=True, remote_id=pid, source="HDU",
+                                   description=problem_description, input=input_description,
+                                   output=output_description, hint=hint, samples=samples, total_submission_number=submission_statistics[
+                                       4],
+                                   solved_submission_number=submission_statistics[5],
+                                   standard_time_limit=submission_statistics[1],
+                                   standard_memory_limit=submission_statistics[
+                                       3], other_time_limit=submission_statistics[0],
+                                   other_memory_limit=submission_statistics[2])
+        elif overwrite:
+            # update
+            problem_data.total_submission_number = submission_statistics[4]
+            problem_data.solved_submission_number = submission_statistics[5]
+        problem_data.save()
+        return json_data
+    else:
+        print(f"HDU {pid} data already in database.")
+        return ProblemSerializer(problem_data).data
 
 
 def get_submission_status(rid):
@@ -213,4 +249,6 @@ if __name__ == '__main__':
     time.sleep(10)
 
     print(get_submission_status(rid))
-    print(get_problem_info(1000))
+    # 批量导入到数据库
+    for i in range(1000, 1030):
+        print(get_problem_info(i))
