@@ -1,7 +1,7 @@
 import markdown
 import re
 from .models import Problem, ProblemTag
-from .serializers import ProblemSerializer
+from .serializers import ProblemSerializer, ProblemListSerializer
 
 from rest_framework.permissions import AllowAny
 from rest_framework.authentication import TokenAuthentication
@@ -18,6 +18,14 @@ class ProblemAPI(APIView):
     def get(self, request, pk, *args, **kwargs):
         problem = get_object_or_404(Problem, id=pk)
         serializer = ProblemSerializer(problem)
+        return Response(serializer.data)
+
+
+class ProblemListAPI(APIView):
+
+    def get(self, request):
+        problems = Problem.objects.all()
+        serializer = ProblemListSerializer(problems, many=True)
         return Response(serializer.data)
 
 

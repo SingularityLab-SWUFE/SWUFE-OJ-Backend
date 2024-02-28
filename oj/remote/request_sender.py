@@ -1,3 +1,6 @@
+from submission.models import Submission
+from problem.models import Problem, ProblemTag
+from problem.serializers import ProblemSerializer
 import requests
 import urllib.parse
 import base64
@@ -9,12 +12,10 @@ import sys
 import django
 from bs4 import BeautifulSoup
 
+from django.conf import settings
 sys.path.append('..')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'oj.settings')
 django.setup()
-
-from problem.serializers import ProblemSerializer
-from problem.models import Problem, ProblemTag
 
 
 # Default headers
@@ -189,8 +190,10 @@ def get_problem_info(pid, write=True, overwrite=False):
         problem_data.save()
         return json_data
     else:
-        print(f"HDU {pid} data already in database.")
-        return ProblemSerializer(problem_data).data
+        if write:
+            print(f"HDU {pid} data already in database.")
+        else:
+            return ProblemSerializer(problem_data).data
 
 
 def get_submission_status(rid):
@@ -234,8 +237,7 @@ int main()
 }'''
 
 if __name__ == '__main__':
-    # 更改为一个真实的杭电账号
-    login_resp = user_login(username, password)
+    login_resp = user_login(settings.HDU_ACCOUNT, settings.HDU_PASSWORD)
     print(login_resp.status_code)
     cookies = login_resp.cookies
 
@@ -250,5 +252,5 @@ if __name__ == '__main__':
 
     print(get_submission_status(rid))
     # 批量导入到数据库
-    for i in range(1000, 1030):
-        print(get_problem_info(i))
+    # for i in range(1000, 1030):
+    #     print(get_problem_info(i))

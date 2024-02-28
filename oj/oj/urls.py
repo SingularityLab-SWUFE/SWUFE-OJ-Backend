@@ -22,5 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('account.urls')),
     path('', include('problem.urls')),
+    path('', include('submission.urls')),
+    path('', include('vjudge.urls')),
     path('api-token-auth', views.obtain_auth_token)
 ]

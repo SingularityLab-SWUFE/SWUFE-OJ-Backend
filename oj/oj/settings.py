@@ -43,7 +43,9 @@ INSTALLED_APPS = [
     'rest_framework',
     # modules
     'account',
-    'problem'
+    'problem',
+    'submission',
+    'vjudge'
 ]
 
 MIDDLEWARE = [
@@ -147,3 +149,10 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
+
+# Public accounts for remote judge
+# HDU: https://acm.hdu.edu.cn/
+
+HDU_ACCOUNT = 'swufevj'
+
+HDU_PASSWORD = '73!kPq9z$eLX'
