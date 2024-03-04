@@ -37,8 +37,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # plugins
+    'ckeditor',
     'rest_framework.authtoken',
     'rest_framework',
+    # modules
+    'account',
+    'problem',
+    'submission',
+    'vjudge'
 ]
 
 MIDDLEWARE = [
@@ -56,7 +63,8 @@ ROOT_URLCONF = 'oj.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates",
+                 ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,11 +84,11 @@ WSGI_APPLICATION = 'oj.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default':{
+    'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'singularity',
         'USER': 'admin',
-        'PASSWORD': 'admin',
+        'PASSWORD': ')}<1a9I0$OHk',
         'HOST': '129.226.145.95',
         'PORT': '3306',
     },
@@ -88,7 +96,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'test_db',
         'USER': 'admin',
-        'PASSWORD': 'admin',
+        'PASSWORD': ')}<1a9I0$OHk',
         'HOST': '129.226.145.95',
         'PORT': '3306',
     },
@@ -141,3 +149,10 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 }
+
+# Public accounts for remote judge
+# HDU: https://acm.hdu.edu.cn/
+
+HDU_ACCOUNT = 'swufevj'
+
+HDU_PASSWORD = '73!kPq9z$eLX'
