@@ -28,6 +28,27 @@ class ProblemListAPI(APIView):
         serializer = ProblemListSerializer(problems, many=True)
         return Response(serializer.data)
 
+class ProblemCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]  
+
+    def post(self, request):
+        serializer = ProblemSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProblemUpdateAPI(APIView):
+    permission_classes = [IsAuthenticated]  
+
+    def put(self, request, id):
+        problem = Problem.objects.get(id=id)
+        serializer = ProblemSerializer(problem, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 def change_formula(matched):
     formula = matched.group(0)
