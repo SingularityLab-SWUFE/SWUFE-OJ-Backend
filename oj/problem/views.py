@@ -32,7 +32,10 @@ class ProblemCreateAPI(APIView):
     permission_classes = [IsAuthenticated]  
 
     def post(self, request):
-        serializer = ProblemSerializer(data=request.data)
+        title = request.data.get('title')
+        problem_ids = request.data.get('problem_ids', [])
+        data = {'title': title, 'problem_ids': problem_ids}
+        serializer = ProblemSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -44,7 +47,10 @@ class ProblemUpdateAPI(APIView):
 
     def put(self, request, id):
         problem = Problem.objects.get(id=id)
-        serializer = ProblemSerializer(problem, data=request.data)
+        title = request.data.get('title')
+        problem_ids = request.data.get('problem_ids', [])
+        data = {'title': title, 'problem_ids': problem_ids}
+        serializer = ProblemSerializer(problem, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
