@@ -25,7 +25,7 @@ class UserManager(models.Manager):
 
 class User(AbstractBaseUser):
     username = models.CharField(unique=True, max_length=255)
-    email = models.TextField(unique=True, null=True)
+    email = models.TextField(null=True)
     # TODO: 将来考虑利用学号注册
     student_number = models.TextField(null=True)
     create_time = models.DateTimeField(auto_now_add=True, null=True)
