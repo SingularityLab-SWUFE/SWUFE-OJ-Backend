@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import datetime
 import os
 from dotenv import load_dotenv
 
@@ -49,7 +50,8 @@ INSTALLED_APPS = [
     'account',
     'problem',
     'submission',
-    'vjudge'
+    'vjudge',
+    'utils'
 ]
 
 MIDDLEWARE = [
@@ -90,20 +92,31 @@ WSGI_APPLICATION = 'oj.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'singularity',
-        'USER': 'admin',
-        'PASSWORD': os.getenv('ADMIN_PASSWORD'),
+        'NAME': os.getenv('SQL_DEV_DB_NAME'),
+        'USER': os.getenv('SQL_DEV_DB_USERNAME'),
+        'PASSWORD': os.getenv('SQL_DEV_DB_PASSWORD'),
         'HOST': os.getenv('SQL_SERVER_HOST'),
         'PORT': os.getenv('SQL_PORT'),
     },
     'test': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'test_db',
-        'USER': 'admin',
-        'PASSWORD': os.getenv('ADMIN_PASSWORD'),
+        'NAME': os.getenv('SQL_TEST_DB_NAME'),
+        'USER': os.getenv('SQL_TEST_DB_USERNAME'),
+        'PASSWORD': os.getenv('SQL_TEST_DB_PASSWORD'),
         'HOST': os.getenv('SQL_SERVER_HOST'),
         'PORT': os.getenv('SQL_PORT'),
     },
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv('REDIS_LOCATION'),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": os.getenv('REDIS_PASSWORD')
+        }
+    }
 }
 
 
@@ -131,7 +144,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -148,10 +161,17 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'account.User'
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
     ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=1)
 }
 
 # Public accounts for remote judge
