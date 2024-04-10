@@ -24,7 +24,7 @@ class Problem(models.Model):
     source = models.CharField(max_length=255, null=True)
     # 标签的多对多关联
     tag = models.ManyToManyField(to=ProblemTag)
-    difficulty = models.TextField()
+    difficulty = models.CharField(max_length=10, default="Easy")
     # problem detail
     description = RichTextField()
     input = RichTextField()
