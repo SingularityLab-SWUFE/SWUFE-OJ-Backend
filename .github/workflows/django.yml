@@ -43,8 +43,8 @@ jobs:
         echo "HDU_PASSWORD=${{ secrets.HDU_PASSWORD }}" >> .env
         echo "REDIS_LOCATION=${{ secrets.REDIS_LOCATION }}" >> .env
         echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
-        cat .env
-        cd ..
+        cd ../..
+        pwd
     - name: Run Tests
       run: |
         python manage.py test
