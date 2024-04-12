@@ -98,6 +98,5 @@ class EditUserProfileAPITest(TestCase):
                 }
         response = self.client.put(
             self.url, json.dumps(data), content_type='application/json')
-        print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['data']['real_name'], 'xiaoming')

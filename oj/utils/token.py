@@ -13,6 +13,6 @@ def get_token_info(token, para='user_id'):
             token, secret_key=settings.SECRET_KEY, verify=False, algorithms=['HS256'])
         if int(decode_data['exp']) < int(time.time()):
             return "token expired"
-        return decode_data['user_id']
+        return decode_data[para]
     except Exception as e:
         return "token error:\n" + str(e)
