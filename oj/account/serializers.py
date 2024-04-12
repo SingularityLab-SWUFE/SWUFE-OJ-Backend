@@ -2,10 +2,27 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.validators import UniqueValidator
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth.models import User
 
-from .models import UserProfile
+from .models import User, UserProfile
+from utils.token import get_token_info
+
+
+class JWTAuthTokenSerializer(JWTAuthentication):
+    def get_user(self, token):
+        try:
+            user_id = get_token_info(str(token))
+        except KeyError:
+            raise InvalidToken('Invalid token')
+
+        try:
+            user = User.objects.get(**{'id': user_id})
+        except User.DoesNotExist:
+            raise AuthenticationFailed('User not found', code='404')
+
+        return user
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,37 +32,38 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        required=True,
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
+
     email = serializers.EmailField(
         required=True,
         validators=[UniqueValidator(queryset=User.objects.all())]
     )
     password = serializers.CharField(
-        write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True)
+        write_only=True, required=True)
+
+    # TODO: will add a validator to check if the student_number is authenticated
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2',
-                  'email')
+        fields = ('username', 'password', 'email')
         extra_kwargs = {
             'username': {'required': True},
             'email': {'required': True},
+            # 'stduent_number' : {'required': True},
         }
-
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError(
-                {"password": "Password fields didn't match."})
-        return attrs
 
     def create(self, validated_data):
         user = User.objects.create(
             username=validated_data['username'],
             email=validated_data['email'],
         )
+        # salt and hash the password
         user.set_password(validated_data['password'])
         user.save()
-
+        # create a default user profile
         UserProfile.objects.create(user=user)
 
         return user

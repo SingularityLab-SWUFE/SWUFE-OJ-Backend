@@ -10,7 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import datetime
+import os
+from dotenv import load_dotenv
+
 from pathlib import Path
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-sqe34)m-#!2zm%o0blm2(lxg9p)5gl5m*7d+ooyldb30c2$9n_'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -45,7 +50,8 @@ INSTALLED_APPS = [
     'account',
     'problem',
     'submission',
-    'vjudge'
+    'vjudge',
+    'utils'
 ]
 
 MIDDLEWARE = [
@@ -86,20 +92,31 @@ WSGI_APPLICATION = 'oj.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'singularity',
-        'USER': 'admin',
-        'PASSWORD': ')}<1a9I0$OHk',
-        'HOST': '129.226.145.95',
-        'PORT': '3306',
+        'NAME': os.getenv('SQL_DEV_DB_NAME'),
+        'USER': os.getenv('SQL_DEV_DB_USERNAME'),
+        'PASSWORD': os.getenv('SQL_DEV_DB_PASSWORD'),
+        'HOST': os.getenv('SQL_SERVER_HOST'),
+        'PORT': os.getenv('SQL_PORT'),
     },
     'test': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'test_db',
-        'USER': 'admin',
-        'PASSWORD': ')}<1a9I0$OHk',
-        'HOST': '129.226.145.95',
-        'PORT': '3306',
+        'NAME': os.getenv('SQL_TEST_DB_NAME'),
+        'USER': os.getenv('SQL_TEST_DB_USERNAME'),
+        'PASSWORD': os.getenv('SQL_TEST_DB_PASSWORD'),
+        'HOST': os.getenv('SQL_SERVER_HOST'),
+        'PORT': os.getenv('SQL_PORT'),
     },
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv('REDIS_LOCATION'),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": os.getenv('REDIS_PASSWORD')
+        }
+    }
 }
 
 
@@ -127,7 +144,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -144,15 +161,22 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'account.User'
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',
     ],
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(days=1)
 }
 
 # Public accounts for remote judge
 # HDU: https://acm.hdu.edu.cn/
 
-HDU_ACCOUNT = 'swufevj'
+HDU_ACCOUNT = os.getenv('HDU_ACCOUNT')
 
-HDU_PASSWORD = '73!kPq9z$eLX'
+HDU_PASSWORD = os.getenv('HDU_PASSWORD')
