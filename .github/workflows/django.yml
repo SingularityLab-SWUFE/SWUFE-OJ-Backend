@@ -47,4 +47,5 @@ jobs:
         pwd
     - name: Run Tests
       run: |
+        cd oj
         python manage.py test
