@@ -29,19 +29,19 @@ jobs:
       run: |
         cd oj/oj
         touch .env
-        echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
-        echo "SQL_DEV_DB_NAME=${{ secrets.SQL_DEV_DB_NAME }}" >> .env
-        echo "SQL_DEV_DB_USERNAME=${{ secrets.SQL_DEV_DB_USERNAME }}" >> .env
-        echo "SQL_DEV_DB_PASSWORD=${{ secrets.SQL_DEV_DB_PASSWORD }}" >> .env
-        echo "SQL_TEST_DB_NAME=${{ secrets.SQL_TEST_DB_NAME }}" >> .env
-        echo "SQL_TEST_DB_USERNAME=${{ secrets.SQL_TEST_DB_USERNAME }}" >> .env
-        echo "SQL_TEST_DB_PASSWORD=${{ secrets.SQL_TEST_DB_PASSWORD }}" >> .env
-        echo "SQL_SERVER_HOST=${{ secrets.SQL_SERVER_HOST }}" >> .env
-        echo "SQL_PORT=${{ secrets.SQL_PORT }}" >> .env
-        echo "HDU_ACCOUNT=${{ secrets.HDU_ACCOUNT }}" >> .env
-        echo "HDU_PASSWORD=${{ secrets.HDU_PASSWORD }}" >> .env
-        echo "REDIS_LOCATION=${{ secrets.REDIS_LOCATION }}" >> .env
-        echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+        echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
+        echo SQL_DEV_DB_NAME=${{ secrets.SQL_DEV_DB_NAME }} >> .env
+        echo SQL_DEV_DB_USERNAME=${{ secrets.SQL_DEV_DB_USERNAME }} >> .env
+        echo SQL_DEV_DB_PASSWORD=${{ secrets.SQL_DEV_DB_PASSWORD }} >> .env
+        echo SQL_TEST_DB_NAME=${{ secrets.SQL_TEST_DB_NAME }} >> .env
+        echo SQL_TEST_DB_USERNAME=${{ secrets.SQL_TEST_DB_USERNAME }} >> .env
+        echo SQL_TEST_DB_PASSWORD=${{ secrets.SQL_TEST_DB_PASSWORD }} >> .env
+        echo SQL_SERVER_HOST=${{ secrets.SQL_SERVER_HOST }} >> .env
+        echo SQL_PORT=${{ secrets.SQL_PORT }} >> .env
+        echo HDU_ACCOUNT=${{ secrets.HDU_ACCOUNT }} >> .env
+        echo HDU_PASSWORD=${{ secrets.HDU_PASSWORD }} >> .env
+        echo REDIS_LOCATION=${{ secrets.REDIS_LOCATION }} >> .env
+        echo REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }} >> .env
         cd ../..
     - name: Run Tests
       run: |
