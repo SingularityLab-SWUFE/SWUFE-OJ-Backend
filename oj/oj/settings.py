@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'account',
     'problem',
     'submission',
-    'vjudge',
+    'remote',
     'utils'
 ]
 
