@@ -26,6 +26,7 @@ jobs:
         known_hosts: ${{ secrets.KNOWN_HOSTS }}
     - name: Test rsync connection over SSH
       run: |
+        ssh-keyscan -H ${{ secrets.JUDGE_SERVER_HOST }} >> ~/.ssh/known_hosts
         rsync -r ./test.txt root@${{ secrets.JUDGE_SERVER_HOST }}:/www/bar/
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
