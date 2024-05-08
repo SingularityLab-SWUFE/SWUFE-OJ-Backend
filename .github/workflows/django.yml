@@ -20,15 +20,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     - name: Install SSH key
-      uses: shimataro/ssh-key-action@v2
+      uses: shimataro/ssh-key-action@v2.7.0
       with:
         key: ${{ secrets.SSH_KEY }}
         name: github-actions
         known_hosts: ${{ secrets.KNOWN_HOSTS }}
     - name: Test rsync connection over SSH
       run: |
-        ssh-keyscan ${{ secrets.JUDGE_SERVER_HOST }} >> ~/.ssh/known_hosts
-        cat /home/runner/.ssh/github-actions
         rsync -r README.md root@${{ secrets.JUDGE_SERVER_HOST }}:/www/bar/
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
