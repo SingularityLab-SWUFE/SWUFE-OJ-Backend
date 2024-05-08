@@ -7,6 +7,7 @@ from django.http import HttpResponse, QueryDict
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
+from rest_framework.test import APIClient
 
 logger = logging.getLogger("")
 
@@ -202,3 +203,11 @@ def validate_serializer(serializer):
         return handle
 
     return validate
+
+
+class APIClient(APIClient):
+    
+    def token_auth(self, user):
+        token = str(user.get_token())
+        auth_header = 'Bearer ' + token
+        self.credentials(HTTP_AUTHORIZATION=auth_header)
