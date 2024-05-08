@@ -12,7 +12,7 @@ class HDUSender(RequestSender):
     def __init__(self):
         super().__init__('HDU')
 
-    def get_auth(self):
+    def _get_auth(self):
         login_data = {
             # using public account to login in
             'username': settings.HDU_ACCOUNT,
@@ -26,11 +26,11 @@ class HDUSender(RequestSender):
                                      data=login_data, params=login_para)
         self.cookies = response.cookies
 
-    def get_submit_url(self, problem_id) -> str:
+    def _get_submit_url(self, problem_id) -> str:
         # fixed submit endpoint for HDU
         return self.oj_url + 'submit.php'
 
-    def get_submit_data(self, problem_id, code, lang) -> dict:
+    def _get_submit_data(self, problem_id, code, lang) -> dict:
         url_encoded_code = quote(code)
         encoded_code = base64.b64encode(url_encoded_code.encode()).decode()
 
@@ -49,7 +49,7 @@ class HDUSender(RequestSender):
             'language': language_type[lang]
         }
 
-    def get_submit_para(self) -> dict:
+    def _get_submit_para(self) -> dict:
         return {
             'action': 'submit',
         }
@@ -60,21 +60,21 @@ class HDUSender(RequestSender):
         '''
         matches = re.findall(r'<td height=22px>(\d+)<\/td>', response.text)
         rid = matches[0]
-        
+
         assert (rid is not None)
         return rid
 
-    def get_submission_url(self, problem_id, submission_id) -> str:
+    def _get_submission_url(self, problem_id, submission_id) -> str:
         # fixed for HDU
         return self.oj_url + 'status.php'
-    
-    def get_submission_para(self, submission_id):
+
+    def _get_submission_para(self, submission_id):
         return {
             'first': submission_id,
             'user': settings.HDU_ACCOUNT,
         }
 
-    def status_parser(self, response, submission_id) -> dict:
+    def _status_parser(self, response, submission_id) -> dict:
         soup = BeautifulSoup(response.text, 'html.parser')
         submission_info = {}
         for row in soup.find_all('tr'):
@@ -93,16 +93,16 @@ class HDUSender(RequestSender):
                 }
         return submission_info
         # return serializers.serialize('json', submission_info)
-    
-    def get_problem_url(self, problem_id) -> str:
+
+    def _get_problem_url(self, problem_id) -> str:
         return self.oj_url + 'showproblem.php'
 
-    def get_problem_para(self, problem_id) -> dict:
+    def _get_problem_para(self, problem_id) -> dict:
         return {
             'pid': problem_id,
         }
-    
-    def problem_parser(self, response) -> dict:
+
+    def _problem_parser(self, response) -> dict:
         title = ""
         problem_description = ""
         input_description = ""
@@ -115,7 +115,7 @@ class HDUSender(RequestSender):
         hint = ""
 
         delimiter = ["Problem Description", "Input",
-                    "Output", "Sample Input", "Sample Output", "Source", "Author", "Hint"]
+                     "Output", "Sample Input", "Sample Output", "Source", "Author", "Hint"]
 
         # 将 <br> 转写成 \n
         html_data = response.text.replace("<br>", '\n')
@@ -184,16 +184,15 @@ class HDUSender(RequestSender):
             "samples": samples,
             "hint": hint
         }
-        
+
         return data_dict
-    
+
     # APIs
     def submit(self, problem_id, code, lang):
         return super().submit(problem_id, code, lang)
-    
+
     def get_submission_info(self, submission_id, problem_id=None) -> dict:
         return super().get_submission_info(submission_id, problem_id)
-    
+
     def get_problem_info(self, problem_id, write=True):
         return super().get_problem_info(problem_id, write)
-    
