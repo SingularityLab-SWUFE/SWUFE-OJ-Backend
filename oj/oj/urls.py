@@ -23,6 +23,6 @@ urlpatterns = [
     path('', include('account.urls')),
     path('', include('problem.urls')),
     path('', include('submission.urls')),
-    path('', include('vjudge.urls')),
+    path('', include('remote.urls')),
     path('api-token-auth', views.obtain_auth_token)
 ]

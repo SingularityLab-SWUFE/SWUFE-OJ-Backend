@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'problem',
     'submission',
     'remote',
-    'utils'
+    'utils',
 ]
 
 MIDDLEWARE = [
@@ -180,3 +180,15 @@ SIMPLE_JWT = {
 HDU_ACCOUNT = os.getenv('HDU_ACCOUNT')
 
 HDU_PASSWORD = os.getenv('HDU_PASSWORD')
+
+# Judge Server
+
+JUDGE_SERVER_TOKEN = os.getenv('JUDGE_SERVER_TOKEN')
+
+JUDGE_SERVER_HOST = os.getenv('JUDGE_SERVER_HOST')
+
+JUDGE_SERVER_PORT = os.getenv('JUDGE_SERVER_PORT')
+
+JUDGE_SERVER_TEST_CASE_DIR = os.getenv('JUDGE_SERVER_TEST_CASE_DIR')
+
+TEST_CASE_DIR = os.getenv('TEST_CASE_DIR') # Temporary directory for test cases
