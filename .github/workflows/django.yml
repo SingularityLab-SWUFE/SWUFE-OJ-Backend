@@ -17,6 +17,13 @@ jobs:
         python-version: [3.12]
 
     steps:
+    - name: Install SSH key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_KEY }}
+        known_hosts: ${{ secrets.KNOWN_HOSTS }}
+    - name: Test SSH connection
+      run: ssh root@${{ secrets.JUDGE_SERVER_HOST }}
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
@@ -43,6 +50,12 @@ jobs:
         echo "HDU_PASSWORD=${{ secrets.HDU_PASSWORD }}" >> .env
         echo "REDIS_LOCATION=${{ secrets.REDIS_LOCATION }}" >> .env
         echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+        echo "JUDGE_SERVER_TOKEN=${{ secrets.JUDGE_SERVER_TOKEN }}" >> .env
+        echo "JUDGE_SERVER_HOST=${{ secrets.JUDGE_SERVER_HOST }}" >> .env
+        echo "JUDGE_SERVER_PORT=${{ secrets.JUDGE_SERVER_PORT }}" >> .env
+        echo "JUDGE_SERVER_USER=${{ secrets.JUDGE_SERVER_USER }}" >> .env
+        echo "TEST_CASE_DIR=${{ secrets.TEST_CASE_DIR }}" >> .env
+        echo "JUDGE_SERVER_TEST_CASE_DIR=${{ secrets.JUDGE_SERVER_TEST_CASE_DIR }}" >> .env
         cd ../..
         pwd
     - name: Run Tests
