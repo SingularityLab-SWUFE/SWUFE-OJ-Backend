@@ -16,7 +16,6 @@ from .serializers import (UserSerializer,
                           EditUserProfileSerializer)
 from .models import User, UserProfile
 
-
 class RegisterUserAPI(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
@@ -74,6 +73,18 @@ class UserProfileAPI(APIView):
         serializer = UserProfileSerializer(user_profile)
         return self.success(serializer.data)
 
+    def post(self, request):
+        '''
+            clear the token from cache
+        '''
+        token = request.META.get('HTTP_AUTHORIZATION').split(' ')[1]
+        user_id = get_token_info(token)
+        username = User.objects.get(id=user_id).username
+        if cache.has_key(token):
+            cache.delete(token)
+            return self.success(f"user:{username} has been logged out.")
+        else:
+            return self.error(f"Token already removed from cache.")
 
 class EditUserProfileAPI(APIView):
 
@@ -82,7 +93,6 @@ class EditUserProfileAPI(APIView):
 
     def put(self, request):
         user_id = request.user.id
-        
         user_profile = UserProfile.objects.filter(user__id=user_id).first()
 
         # self.check_object_permissions(request, user_profile)
