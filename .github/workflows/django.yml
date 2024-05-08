@@ -23,11 +23,11 @@ jobs:
       uses: shimataro/ssh-key-action@v2
       with:
         key: ${{ secrets.SSH_KEY }}
-        known_hosts: ${{ secrets.KNOWN_HOSTS }}
+        known_hosts: "placeholder"
     - name: Test rsync connection over SSH
       run: |
         ssh-keyscan -H ${{ secrets.JUDGE_SERVER_HOST }} >> ~/.ssh/known_hosts
-        rsync -r ./test.txt root@${{ secrets.JUDGE_SERVER_HOST }}:/www/bar/
+        rsync -r README.md root@${{ secrets.JUDGE_SERVER_HOST }}:/www/bar/
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
