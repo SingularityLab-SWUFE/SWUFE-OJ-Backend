@@ -1,7 +1,11 @@
 import jwt
 import time
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import (InvalidToken,
+                                                 AuthenticationFailed)
 
-from oj import settings
+from django.conf import settings
+from account.models import User
 
 
 def get_token_info(token, para='user_id'):
@@ -16,3 +20,19 @@ def get_token_info(token, para='user_id'):
         return decode_data[para]
     except Exception as e:
         return "token error:\n" + str(e)
+
+
+class JWTAuthTokenSerializer(JWTAuthentication):
+
+    def get_user(self, token):
+        try:
+            user_id = get_token_info(str(token))
+        except KeyError:
+            raise InvalidToken('Invalid token')
+
+        try:
+            user = User.objects.get(**{'id': user_id})
+        except User.DoesNotExist:
+            raise AuthenticationFailed('User not found', code='404')
+
+        return user

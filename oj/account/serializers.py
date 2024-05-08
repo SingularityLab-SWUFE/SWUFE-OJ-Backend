@@ -2,27 +2,9 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.validators import UniqueValidator
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
 from django.contrib.auth.password_validation import validate_password
 
 from .models import User, UserProfile
-from utils.token import get_token_info
-
-
-class JWTAuthTokenSerializer(JWTAuthentication):
-    def get_user(self, token):
-        try:
-            user_id = get_token_info(str(token))
-        except KeyError:
-            raise InvalidToken('Invalid token')
-
-        try:
-            user = User.objects.get(**{'id': user_id})
-        except User.DoesNotExist:
-            raise AuthenticationFailed('User not found', code='404')
-
-        return user
 
 
 class UserSerializer(serializers.ModelSerializer):
