@@ -25,9 +25,9 @@ jobs:
         key: ${{ secrets.SSH_KEY }}
         name: github-actions
         known_hosts: ${{ secrets.KNOWN_HOSTS }}
-    - name: Test rsync connection over SSH
-      run: |
-        rsync -r README.md root@${{ secrets.JUDGE_SERVER_HOST }}:/www/bar/
+    # - name: Test rsync connection over SSH
+    #   run: |
+    #     rsync -r README.md root@${{ secrets.JUDGE_SERVER_HOST }}:/www/bar/
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
