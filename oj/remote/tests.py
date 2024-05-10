@@ -21,6 +21,7 @@ class HduRequestTest(TestCase):
         self.client = HDUSender()
 
     def test_login(self):
+        # if login failed, it will raise an exception
         self.client._get_auth()
 
         # print('validating cookies:', self.client.cookies.get_dict())
@@ -40,7 +41,6 @@ class HduRequestTest(TestCase):
         resp = self.client.submit(1000, code=sample_code, lang='G++')
 
         self.assertEqual(resp.status_code, 200)
-        print(resp.text) # debug
 
         rid = self.client._get_submission_id(resp)
         # print('Submission has been sent with rid:', rid)

@@ -14,6 +14,10 @@ class RequestSenderException(Exception):
     pass
 
 
+class LoginException(Exception):
+    pass
+
+
 class RequestSender:
     '''
         Base class for remote oj request sender.

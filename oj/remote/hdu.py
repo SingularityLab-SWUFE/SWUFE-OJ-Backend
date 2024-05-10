@@ -1,4 +1,4 @@
-from .request_sender import RequestSender
+from .request_sender import RequestSender, LoginException
 from urllib.parse import quote
 from django.conf import settings
 from django.core import serializers
@@ -24,6 +24,10 @@ class HDUSender(RequestSender):
         }
         response = self.session.post('https://acm.hdu.edu.cn/userloginex.php',
                                      data=login_data, params=login_para)
+
+        if response.status_code != 302:
+            raise LoginException('Failed to login in HDU')
+        
         self.cookies = response.cookies
 
     def _get_submit_url(self, problem_id) -> str:
