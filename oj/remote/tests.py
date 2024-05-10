@@ -34,7 +34,7 @@ class HduRequestTest(TestCase):
 
         self.assertEqual(resp.status_code, 200)
 
-        rid = self.client.get_submission_id(resp)
+        rid = self.client._get_submission_id(resp)
         # print('Submission has been sent with rid:', rid)
         self.assertIsNotNone(rid)
 

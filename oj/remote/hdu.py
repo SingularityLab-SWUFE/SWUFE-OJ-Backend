@@ -54,14 +54,17 @@ class HDUSender(RequestSender):
             'action': 'submit',
         }
 
-    def get_submission_id(self, response):
+    def _get_submission_id(self, response):
         '''
             Parse submission response to get submission id.
         '''
         matches = re.findall(r'<td height=22px>(\d+)<\/td>', response.text)
-        rid = matches[0]
-
-        assert (rid is not None)
+        # print(matches)
+        try:
+            rid = matches[0]
+        except IndexError:
+            rid = None
+        
         return rid
 
     def _get_submission_url(self, problem_id, submission_id) -> str:
