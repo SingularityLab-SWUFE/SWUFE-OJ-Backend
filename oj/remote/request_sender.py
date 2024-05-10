@@ -34,6 +34,8 @@ class RequestSender:
 
         # Requests are passed through a session object to keep track of cookies and CSRF tokens
         self.session = requests.Session()
+        self.session.headers.update(
+            {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0'})
         self.cookies = None
         self.csrf_token = None
 
@@ -96,7 +98,8 @@ class RequestSender:
             Get specific submission information from remote oj.
         '''
         if self.oj_name != 'HDU' and problem_id is None:
-            raise RequestSenderException("Problem id is required for non-HDU oj")
+            raise RequestSenderException(
+                "Problem id is required for non-HDU oj")
 
         # url of submission
         submission_url = self._get_submission_url(problem_id, submission_id)
