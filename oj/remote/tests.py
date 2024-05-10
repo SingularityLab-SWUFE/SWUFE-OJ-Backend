@@ -26,6 +26,13 @@ class HduRequestTest(TestCase):
         # print('validating cookies:', self.client.cookies.get_dict())
         self.assertNotEqual(self.client.cookies, None)
 
+    def test_get_submission_id(self):
+        resp = self.client.session.get(
+            'https://acm.hdu.edu.cn/status.php?first=39336558&pid=&user=&lang=0&status=0')
+        
+        rid = self.client._get_submission_id(resp)
+        self.assertEqual(rid, '39336558')
+    
     def test_submit_code(self):
         '''
             Test for submitting code to HDU.

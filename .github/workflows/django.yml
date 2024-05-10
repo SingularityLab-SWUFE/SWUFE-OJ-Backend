@@ -10,8 +10,8 @@ jobs:
   build:
     environment: actions
 
-    # runs-on: ubuntu-latest
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted
     strategy:
       max-parallel: 4
       matrix:
