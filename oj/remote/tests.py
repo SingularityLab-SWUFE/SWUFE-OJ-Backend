@@ -21,7 +21,7 @@ class HduRequestTest(TestCase):
         self.client = HDUSender()
 
     def test_login(self):
-        self.client.get_auth()
+        self.client._get_auth()
 
         # print('validating cookies:', self.client.cookies.get_dict())
         self.assertNotEqual(self.client.cookies, None)
