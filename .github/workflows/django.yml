@@ -19,15 +19,17 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-    - name: Install SSH key
-      uses: shimataro/ssh-key-action@v2.7.0
-      with:
-        key: ${{ secrets.SSH_KEY }}
-        name: github-actions
-        known_hosts: ${{ secrets.KNOWN_HOSTS }}
-    # - name: Test rsync connection over SSH
-    #   run: |
-    #     rsync -r README.md root@${{ secrets.JUDGE_SERVER_HOST }}:/www/bar/
+    - name: Set up SSH config
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan ${{ secrets.JUDGE_SERVER_HOST }} >> ~/.ssh/known_hosts
+    - name: Test rsync connection over SSH
+      run: |
+        rsync -r README.md root@${{ secrets.JUDGE_SERVER_HOST }}:/www/bar/
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
