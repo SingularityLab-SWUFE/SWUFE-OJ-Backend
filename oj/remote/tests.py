@@ -33,6 +33,7 @@ class HduRequestTest(TestCase):
         resp = self.client.submit(1000, code=sample_code, lang='G++')
 
         self.assertEqual(resp.status_code, 200)
+        print(resp.text) # debug
 
         rid = self.client._get_submission_id(resp)
         # print('Submission has been sent with rid:', rid)
