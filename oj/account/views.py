@@ -8,22 +8,13 @@ from rest_framework.response import Response
 from rest_framework import generics
 
 from utils.api import APIView
-from utils.token import get_token_info
+from utils.token import get_token_info, JWTAuthTokenSerializer
 
-from .serializers import (JWTAuthTokenSerializer,
-                          UserSerializer,
+from .serializers import (UserSerializer,
                           RegisterSerializer,
                           UserProfileSerializer,
                           EditUserProfileSerializer)
 from .models import User, UserProfile
-
-
-class UserDetailAPI(APIView):
-    def get(self, request, pk, *args, **kwargs):
-        user = User.objects.get_object_or_404(id=pk)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-
 
 class RegisterUserAPI(generics.CreateAPIView):
     serializer_class = RegisterSerializer
@@ -67,6 +58,7 @@ class LoginAPI(APIView):
                 "token": token,
                 "user": UserSerializer(user).data
             }
+            # cache set default timeout 24h
             cache.set(token, user, timeout=60*60*24)
             user.save()
             return self.success(data)
@@ -81,6 +73,18 @@ class UserProfileAPI(APIView):
         serializer = UserProfileSerializer(user_profile)
         return self.success(serializer.data)
 
+    def post(self, request):
+        '''
+            clear the token from cache
+        '''
+        token = request.META.get('HTTP_AUTHORIZATION').split(' ')[1]
+        user_id = get_token_info(token)
+        username = User.objects.get(id=user_id).username
+        if cache.has_key(token):
+            cache.delete(token)
+            return self.success(f"user:{username} has been logged out.")
+        else:
+            return self.error(f"Token already removed from cache.")
 
 class EditUserProfileAPI(APIView):
 
@@ -88,8 +92,7 @@ class EditUserProfileAPI(APIView):
     authentication_classes = [JWTAuthTokenSerializer]
 
     def put(self, request):
-        token = request.META.get('HTTP_AUTHORIZATION').split(' ')[1]
-        user_id = get_token_info(token)
+        user_id = request.user.id
         user_profile = UserProfile.objects.filter(user__id=user_id).first()
 
         # self.check_object_permissions(request, user_profile)
@@ -101,3 +104,11 @@ class EditUserProfileAPI(APIView):
             serializer.save()
             return self.success(serializer.data)
         return self.error(serializer.errors)
+
+
+# !Test API
+class UserDetailAPI(APIView):
+    def get(self, request, pk, *args, **kwargs):
+        user = User.objects.get_object_or_404(id=pk)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)

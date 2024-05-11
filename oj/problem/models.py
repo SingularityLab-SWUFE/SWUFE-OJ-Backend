@@ -31,18 +31,24 @@ class Problem(models.Model):
     output = RichTextField()
     # [{input: "test", output: "123"}, {input: "test123", output: "456"}]
     samples = models.JSONField(null=True)
+    # None for remote problem
+    test_case_id = models.TextField(null=True, default=None)
     hint = RichTextField(null=True)
     # submission info
     total_submission_number = models.IntegerField(default=0)
     solved_submission_number = models.IntegerField(default=0)
-    # ms/kB
+    # ms/MB
     # C/C++
     standard_time_limit = models.IntegerField(default=1000)
-    standard_memory_limit = models.IntegerField(default=65536)
+    # Default as 256MB
+    standard_memory_limit = models.IntegerField(default=256)
     # JAVA, python, etc.
     other_time_limit = models.IntegerField(default=2000)
-    other_memory_limit = models.IntegerField(default=65536)
+    other_memory_limit = models.IntegerField(default=512)
 
+    def __repr__(self):
+        return f"<Problem {self.title}: id={self.id}>"
+    
     class Meta:
         db_table = 'problem'
  

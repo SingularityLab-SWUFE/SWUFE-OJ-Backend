@@ -44,6 +44,9 @@ class User(AbstractBaseUser):
     def get_token(self):
         return RefreshToken.for_user(self).access_token
 
+    def is_admin(self):
+        return self.admin_type != Role.REGULAR_USER
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
