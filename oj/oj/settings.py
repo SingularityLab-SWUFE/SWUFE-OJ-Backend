@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'submission',
     'remote',
     'utils',
+    'contest',
+    'discussion'
 ]
 
 MIDDLEWARE = [
