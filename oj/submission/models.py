@@ -1,6 +1,6 @@
 from django.db import models
 from problem.models import Problem
-
+from contest.models import Contest
 
 class JudgeStatus:
     COMPILE_ERROR = -2
@@ -18,6 +18,7 @@ class JudgeStatus:
 
 class Submission(models.Model):
     id = models.AutoField(primary_key=True)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, null=True)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     create_time = models.DateTimeField(auto_now_add=True)
     username = models.TextField()

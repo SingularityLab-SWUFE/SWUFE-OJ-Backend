@@ -24,5 +24,6 @@ urlpatterns = [
     path('', include('problem.urls')),
     path('', include('submission.urls')),
     path('', include('remote.urls')),
+    path('', include('contest.urls')),
     path('api-token-auth', views.obtain_auth_token)
 ]

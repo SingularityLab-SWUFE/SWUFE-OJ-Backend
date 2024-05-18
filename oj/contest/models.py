@@ -1,6 +1,13 @@
 from django.db import models
 from account.models import User
 from ckeditor.fields import RichTextField
+from django.utils import timezone
+
+
+class ContestStatus(object):
+    NOT_START = 0
+    ENDED = 1
+    RUNNING = 2
 
 
 class Contest(models.Model):
@@ -16,6 +23,15 @@ class Contest(models.Model):
     last_update_time = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     visible = models.BooleanField(default=True)
+
+    @property
+    def status(self):
+        if self.start_time > timezone.now():
+            return ContestStatus.NOT_START
+        elif self.end_time < timezone.now():
+            return ContestStatus.ENDED
+        else:
+            return ContestStatus.RUNNING
 
     class Meta:
         db_table = "contest"

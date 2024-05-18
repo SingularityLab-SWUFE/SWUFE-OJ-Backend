@@ -6,6 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from utils.api import APIClient
 from account.models import User, Role
+from contest.models import Contest
 
 from .serializers import TestCaseUploadForm
 from .models import Problem
@@ -77,8 +78,12 @@ class ProblemCreateAPITest(TestCase):
 class ProblemListAPITest(TestCase):
     def setUp(self):
         # mock data
+        self.admin = User.objects.create(
+            username='admin', admin_type=Role.ADMIN)
+        self.contest = Contest.objects.create(
+            title='contest1', start_time='2021-01-01T00:00:00+08:00', end_time='2029-01-02T00:00:00+08:00', created_by=self.admin)
         self.p1 = Problem.objects.create(title='p1', is_remote=True, remote_id=1000, source="HDU", difficulty="Easy", description="desc1",
-                                         input="input1", output="output1", samples=[{"input": "input1", "output": "output1"}])
+                                         input="input1", output="output1", samples=[{"input": "input1", "output": "output1"}], contest=self.contest)
         self.p2 = Problem.objects.create(title='p2', is_remote=True, remote_id=1001, source="HDU", difficulty="Easy", description="desc2",
                                          input="input2", output="output2", samples=[{"input": "input2", "output": "output2"}])
         self.p3 = Problem.objects.create(title='p3', is_remote=False, difficulty="Hard", description="desc3",
@@ -109,6 +114,12 @@ class ProblemListAPITest(TestCase):
         response = self.client.get(self.url, params)
         data = response.data['data']
         self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['title'], self.p1.title)
+
+    def test_filter_by_contest(self):
+        params = {'contest_id': self.contest.id}
+        response = self.client.get(self.url, params)
+        data = response.data['data']
         self.assertEqual(data[0]['title'], self.p1.title)
 
 

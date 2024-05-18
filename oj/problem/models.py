@@ -1,6 +1,6 @@
 from django.db import models
 from ckeditor.fields import RichTextField
-
+from contest.models import Contest
 
 class ProblemTag(models.Model):
     name = models.CharField(max_length=50)
@@ -18,6 +18,7 @@ class ProblemDifficulty(object):
 class Problem(models.Model):
     id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, null=True)
     # remote
     is_remote = models.BooleanField(default=False, null=True)
     remote_id = models.CharField(max_length=50, null=True)

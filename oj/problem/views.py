@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, render
 from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-
+from contest.models import Contest
 from utils.templates import markdown_format
 from utils.token import JWTAuthTokenSerializer
 from utils.api import APIView, CSRFExemptAPIView
@@ -33,9 +33,15 @@ class ProblemListAPI(APIView):
         source = request.query_params.get('source', None)
         difficulty = request.query_params.get('difficulty', None)
         keyword = request.query_params.get('keyword', None)
+        contest_id = request.query_params.get('contest_id', None)
 
         problems = Problem.objects.all()
-
+        if contest_id:
+            try:
+                contest = Contest.objects.get(id=contest_id)
+                problems = problems.filter(contest=contest)
+            except Contest.DoesNotExist:
+                pass
         if is_remote:
             problems = problems.filter(is_remote=True)
         if source:
