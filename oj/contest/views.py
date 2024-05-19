@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from utils.api import APIView
 from utils.token import JWTAuthTokenSerializer
 from account.models import User
+from problem.models import ProblemSet
 from .models import Contest, ACMContestRank, OIContestRank, ContestStatus
 from .serializers import (ContestSerializer,
                           ContestAdminSerializer,
@@ -87,10 +88,24 @@ class ContestAdminAPI(APIView):
             "end_time": end_time,
             "password": data.get("password"),
             "visible": data["visible"],
-            "created_by": user
+            "created_by": user,
+            "contest_type": data["contest_type"]
         }
+        if info['contest'] == 'training':
+            # 假设 data 是包含请求数据的字典
+            problem_set_id = data.get("problem_set_id")
+            if problem_set_id is None:
+                return self.error("Problem set must be provided for training contests.")
+
+            try:
+                problem_set = ProblemSet.objects.get(id=problem_set_id)
+            except ProblemSet.DoesNotExist:
+                return self.error("Problem set does not exist.")
 
         contest = Contest.objects.create(**info)
+        problem_set.contest = contest
+        problem_set.save()
+
         return self.success(CreateContestSerializer(contest).data)
 
     def put(self, request):

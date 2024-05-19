@@ -23,6 +23,8 @@ class Contest(models.Model):
     last_update_time = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     visible = models.BooleanField(default=True)
+    contest_type = models.CharField(max_length=50)
+
 
     @property
     def status(self):
