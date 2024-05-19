@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from .models import Problem, ProblemTag
+from .models import Problem, ProblemTag, ProblemSet
 from .serializers import ProblemSerializer, ProblemListSerializer, TestCaseUploadForm
 from .utils import TestCaseZipProcessor, rand_str
 
@@ -124,6 +124,26 @@ class ProblemCreateAPI(APIView):
 
         problem = Problem.objects.create(**data)
         return self.success(ProblemSerializer(problem).data)
+
+
+class ProblemSetViewAPI(APIView):
+    def get(self, request):
+        problem_set_id = request.GET.get('problem_set_id')
+        problem_set = ProblemSet.objects.get(id=problem_set_id)
+        return self.success(ProblemListSerializer(problem_set).data)
+
+class ProblemSetCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthTokenSerializer]
+    def post(self, request):
+        name = request.POST.get('name')
+        description = request.POST.get('description')
+        problem_set = ProblemSet.objects.create(
+            name=name,
+            description=description,
+            created_by=request.user
+        )
+        return self.success(ProblemListSerializer(problem_set).data)
 
 
 def problem_display(request, id):
