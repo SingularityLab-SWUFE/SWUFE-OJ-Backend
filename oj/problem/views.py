@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from .models import Problem, ProblemTag, ProblemSet
-from .serializers import ProblemSerializer, ProblemListSerializer, TestCaseUploadForm
+from .serializers import (ProblemSerializer, ProblemListSerializer,
+                          ProblemSetSerializer, TestCaseUploadForm)
 from .utils import TestCaseZipProcessor, rand_str
 
 from django.shortcuts import get_object_or_404, render
@@ -135,16 +136,44 @@ class ProblemSetViewAPI(APIView):
 class ProblemSetCreateAPI(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthTokenSerializer]
+    
     def post(self, request):
-        name = request.POST.get('name')
-        description = request.POST.get('description')
+        name = request.data.get('name')
+        description = request.data.get('description')
+        problems = request.data.get('problems')
         problem_set = ProblemSet.objects.create(
             name=name,
             description=description,
             created_by=request.user
         )
-        return self.success(ProblemListSerializer(problem_set).data)
+        for problem_id in problems:
+            problem = Problem.objects.get(id=problem_id)
+            problem_set.problems_included.add(problem)
+        return self.success(ProblemSetSerializer(problem_set).data)
 
+    def put(self, request):
+        problem_set_id = request.data.get('problem_set_id')
+        try:
+            problem_set = ProblemSet.objects.get(id=problem_set_id)
+        except ProblemSet.DoesNotExist:
+            return self.error('Problem set does not exist')
+        user = request.user
+        if user != problem_set.created_by:
+            return self.error('You are not the creator of this problem set')
+        
+        data = request.data
+        
+        for k, v in data.items():
+            setattr(problem_set, k, v)
+        
+        problems = request.data.get('problems')
+        problem_set.problems_included.clear()
+        for problem_id in problems:
+            problem = Problem.objects.get(id=problem_id)
+            problem_set.problems_included.add(problem)
+        
+        problem_set.save()
+        return self.success(ProblemSetSerializer(problem_set).data)
 
 def problem_display(request, id):
     problem = Problem.objects.get(id=id)

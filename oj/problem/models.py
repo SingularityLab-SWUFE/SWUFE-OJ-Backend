@@ -56,7 +56,7 @@ class Problem(models.Model):
 
 class ProblemSet(models.Model):
     name = models.TextField(max_length=200, verbose_name="名字")
-    contest = models.ForeignKey(Contest, on_delete=models.CASCADE)
+    contest = models.ForeignKey(Contest, null=True, on_delete=models.CASCADE)
     description = models.TextField(verbose_name="描述")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, verbose_name="创建用户")
     created_date = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")

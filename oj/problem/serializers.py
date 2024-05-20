@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Problem
+from .models import Problem, ProblemSet
 from django import forms
 
 class ProblemSerializer(serializers.ModelSerializer):
@@ -32,6 +32,12 @@ class ProblemListSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'source', 'tag', 'remote_id', 'difficulty',
                   'total_submission_number', 'solved_submission_number']
 
+
+class ProblemSetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProblemSet
+        fields = '__all__'
+        
 
 class TestCaseUploadForm(forms.Form):
     spj = forms.CharField(max_length=12)

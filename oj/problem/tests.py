@@ -1,4 +1,5 @@
 import urllib
+import json
 import os
 from django.test import TestCase
 from rest_framework.reverse import reverse
@@ -9,7 +10,7 @@ from account.models import User, Role
 from contest.models import Contest
 
 from .serializers import TestCaseUploadForm
-from .models import Problem
+from .models import Problem, ProblemSet
 from .utils import create_test_case_zip, TestCaseZipProcessor
 
 test_problem = {
@@ -149,3 +150,57 @@ class TestCaseAPITest(TestCase, TestCaseZipProcessor):
 
         self.rsync_test_cases(data['test_case_id'], delete=True)
         os.remove(self.filename)
+
+
+class ProblemSetAPITest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create(username='test', admin_type=Role.ADMIN)
+        self.client.token_auth(self.user)
+        self.problem = Problem.objects.create(**test_problem)
+        self.url = reverse('create_problem_set')
+
+    def test_create_problem_set(self):
+        problem_set_info = {
+            'name': "test set",
+            'description': "test set description",
+            'problems': [self.problem.id]
+        }
+        request_data = json.dumps(problem_set_info)
+        response = self.client.post(
+            self.url, request_data, content_type='application/json')
+        data = response.data['data']
+        self.assertEqual(data['name'], problem_set_info['name'])
+        self.assertEqual(data['description'], problem_set_info['description'])
+
+    def test_add_problem_to_set(self):
+        problem_set_info = {
+            'name': "test set",
+            'description': "test set description",
+            'created_by': self.user
+        }
+        problem_set = ProblemSet.objects.create(**problem_set_info)
+        problem_set.problems_included.set([self.problem])
+        self.assertEqual(problem_set.problems_included.count(), 1)
+        test_problem_2 = test_problem.copy()
+        test_problem_2['title'] = 'new test problem'
+        new_problem = Problem.objects.create(**test_problem_2)
+        
+        request_data = json.dumps({'name': 'Updated problem set',
+                                   'problem_set_id': problem_set.id,
+                                   'problems': [self.problem.id, new_problem.id]})
+        response = self.client.put(
+            reverse('create_problem_set'), request_data, content_type='application/json')
+        self.assertEqual(response.data['error'], None)
+        data = response.data['data']
+        self.assertEqual(data['name'], 'Updated problem set')
+        self.assertEqual(data['problems_included'], [
+                         self.problem.id, new_problem.id])
+        
+        # No permission to update
+        user = User.objects.create(username='test2')
+        self.client.token_auth(user)
+        response = self.client.put(
+            reverse('create_problem_set'), request_data, content_type='application/json')
+        self.assertEqual(response.data['error'], 'error')
+        
