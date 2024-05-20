@@ -10,6 +10,11 @@ class ContestStatus(object):
     RUNNING = 2
 
 
+class ContestType(object):
+    TRAINING = 'training'
+    RATED = 'rated'
+
+
 class Contest(models.Model):
     title = models.TextField()
     description = RichTextField()
@@ -23,7 +28,7 @@ class Contest(models.Model):
     last_update_time = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     visible = models.BooleanField(default=True)
-    contest_type = models.CharField(max_length=50)
+    contest_type = models.CharField(default=ContestType.TRAINING, max_length=50)
 
 
     @property
