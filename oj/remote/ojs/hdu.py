@@ -1,4 +1,4 @@
-from .request_sender import RequestSender, LoginException
+from ..utils import RequestSender, LoginException
 from urllib.parse import quote
 from django.conf import settings
 from django.core import serializers
