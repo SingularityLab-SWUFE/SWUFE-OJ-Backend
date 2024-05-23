@@ -137,14 +137,6 @@ class ContestAdminAPI(APIView):
 
 class ContestRankAPI(APIView):
 
-    def check_password(self, password, contest):
-        if password is None:
-            return self.error("Password is required")
-        elif password != contest.password:
-            return self.error("Password is incorrect")
-        else:
-            return self.success(ContestSerializer(contest).data)
-
     def get(self, request):
         contest_id = request.GET.get('contest_id')
         if not contest_id:
@@ -152,7 +144,10 @@ class ContestRankAPI(APIView):
         try:
             contest = Contest.objects.get(id=contest_id, visible=True)
             if contest.password:
-                self.check_password(request.GET.get('password'), contest)
+                if request.GET.get('password') is None:
+                    return self.error("Password is required")
+                if contest.password != request.GET.get('password'):
+                    return self.error("Password is incorrect")
             rule_type = contest.rule_type
             if rule_type == "ACM":
                 ranks = ACMContestRank.objects.filter(
