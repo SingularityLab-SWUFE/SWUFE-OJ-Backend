@@ -1,4 +1,3 @@
-from django.http import HttpResponse
 from .models import Problem, ProblemTag, ProblemSet
 from .serializers import (ProblemSerializer, ProblemListSerializer,
                           ProblemSetSerializer, TestCaseUploadForm)
@@ -6,6 +5,7 @@ from .utils import TestCaseZipProcessor, rand_str
 
 from django.shortcuts import get_object_or_404, render
 from django.db.models import Q
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from contest.models import Contest
@@ -35,6 +35,8 @@ class ProblemListAPI(APIView):
         difficulty = request.query_params.get('difficulty', None)
         keyword = request.query_params.get('keyword', None)
         contest_id = request.query_params.get('contest_id', None)
+        problem_set_id = request.query_params.get('problem_set_id', None)
+        page = request.query_params.get('page', 1)
 
         problems = Problem.objects.all()
         if contest_id:
@@ -42,6 +44,12 @@ class ProblemListAPI(APIView):
                 contest = Contest.objects.get(id=contest_id)
                 problems = problems.filter(contest=contest)
             except Contest.DoesNotExist:
+                pass
+        if problem_set_id:
+            try:
+                problem_set = ProblemSet.objects.get(id=problem_set_id)
+                problems = problems.filter(problem_set=problem_set)
+            except ProblemSet.DoesNotExist:
                 pass
         if is_remote:
             problems = problems.filter(is_remote=True)
@@ -53,7 +61,14 @@ class ProblemListAPI(APIView):
             problems = problems.filter(
                 Q(title__icontains=keyword) | Q(description__icontains=keyword))
             # or problems = problems.filter(description__icontains=keyword)
-
+        paginator = Paginator(problems, 10)
+        try:
+            problems = paginator.page(page)
+        except PageNotAnInteger:
+            problems = paginator.page(1)
+        except EmptyPage:
+            problems = paginator.page(paginator.num_pages)
+            
         serializer = ProblemListSerializer(problems, many=True)
         return self.success(serializer.data)
 
@@ -126,12 +141,6 @@ class ProblemCreateAPI(APIView):
         problem = Problem.objects.create(**data)
         return self.success(ProblemSerializer(problem).data)
 
-
-class ProblemSetViewAPI(APIView):
-    def get(self, request):
-        problem_set_id = request.GET.get('problem_set_id')
-        problem_set = ProblemSet.objects.get(id=problem_set_id)
-        return self.success(ProblemListSerializer(problem_set).data)
 
 class ProblemSetCreateAPI(APIView):
     permission_classes = [IsAuthenticated]
