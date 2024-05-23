@@ -3,9 +3,9 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from utils.api import APIClient
-from .models import Contest
+from .models import Contest, ContestType
 from account.models import User, Role
-from problem.models import Problem
+from problem.models import Problem, ProblemSet
 
 contest_data = {
     "title": "Test Contest",
@@ -25,10 +25,28 @@ class ContestTest(TestCase):
         self.client.token_auth(self.admin_user)
         self.url = reverse('contest_admin_api')
 
-    def test_create_contest(self):
+    def test_create_training_contest(self):
+        contest_data["contest_type"] = ContestType.TRAINING
+
         encoded_data = urlencode(contest_data)
+        # no problem set provided
         resp = self.client.post(self.url, encoded_data,
                                 content_type='application/x-www-form-urlencoded')
+        self.assertEqual(resp.data['error'], 'error')
+        self.assertEqual(
+            resp.data['data'], 'Problem set must be provided for training contests.')
+
+        problem_set = ProblemSet.objects.create(name='test')
+        problem1 = Problem.objects.create(title='test1')
+        problem2 = Problem.objects.create(title='test2')
+        
+        problem_set.problems_included.add(problem1.id, problem2.id)
+        request_data = contest_data.copy()
+        request_data["problem_set_id"] = problem_set.id
+        encoded_data = urlencode(request_data)
+        resp = self.client.post(self.url, encoded_data,
+                         content_type='application/x-www-form-urlencoded')
+        
         self.assertEqual(resp.data['error'], None)
         data = resp.data['data']
         self.assertEqual(data['title'], contest_data['title'])
@@ -41,6 +59,9 @@ class ContestTest(TestCase):
         self.assertEqual(data['title'], contest.title)
         self.assertEqual(contest.created_by.username,
                          self.admin_user.username)
+
+    def test_create_rated_contest(self):
+        pass
 
     def test_update_contest(self):
         contest = Contest.objects.create(
@@ -83,7 +104,7 @@ class ContestViewTest(TestCase):
         self.assertEqual(data['title'], contest.title)
 
         # Login without password
-        resp = self.client.get(self.url, {'id': contest.id})
+        resp = self.client.get(self.url, {'contest_id': contest.id})
         self.assertEqual(resp.data['error'], "error")
         self.assertEqual(resp.data['data'], "Password is required")
 
@@ -92,6 +113,7 @@ class ContestViewTest(TestCase):
                                           'password': 'wrong'})
         self.assertEqual(resp.data['error'], "error")
         self.assertEqual(resp.data['data'], "Password is incorrect")
+
 
 class ContestRegisterTest(TestCase):
     def setUp(self):
@@ -104,12 +126,13 @@ class ContestRegisterTest(TestCase):
     def test_register_contest(self):
         pass
 
+
 class ContestRankTest(TestCase):
     def setUp(self):
         self.client = APIClient()
-        
+
     def test_acm_rank(self):
         pass
-    
+
     def test_oi_rank(self):
         pass

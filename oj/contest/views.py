@@ -30,8 +30,7 @@ class ContestViewAPI(APIView):
         try:
             contest = Contest.objects.get(id=contest_id, visible=True)
             if contest.password:
-                self.check_password(request.GET.get('password'), contest)
-            return self.success(ContestSerializer(contest).data)
+                return self.check_password(request.GET.get('password'), contest)
         except Contest.DoesNotExist:
             return self.error("Contest does not exist")
 
@@ -91,8 +90,7 @@ class ContestAdminAPI(APIView):
             "created_by": user,
             "contest_type": data["contest_type"]
         }
-        if info['contest'] == 'training':
-            # 假设 data 是包含请求数据的字典
+        if info['contest_type'] == 'training':
             problem_set_id = data.get("problem_set_id")
             if problem_set_id is None:
                 return self.error("Problem set must be provided for training contests.")
