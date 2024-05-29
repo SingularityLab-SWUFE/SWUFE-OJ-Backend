@@ -1,6 +1,7 @@
 from .models import Problem, ProblemTag, ProblemSet
 from .serializers import (ProblemSerializer, ProblemListSerializer,
-                          ProblemSetSerializer, TestCaseUploadForm)
+                          ProblemSetSerializer, CreateProblemSerializer,
+                          TestCaseUploadForm)
 from .utils import TestCaseZipProcessor, rand_str
 
 from django.shortcuts import get_object_or_404, render
@@ -11,7 +12,7 @@ from rest_framework.response import Response
 from contest.models import Contest
 from utils.templates import markdown_format
 from utils.token import JWTAuthTokenSerializer
-from utils.api import APIView, CSRFExemptAPIView
+from utils.api import APIView, CSRFExemptAPIView, validate_serializer
 
 
 class ProblemAPI(APIView):
@@ -122,22 +123,30 @@ class ProblemCreateAPI(APIView):
     authentication_classes = [JWTAuthTokenSerializer]
 
     def post(self, request):
-        # User object is passed by JWTAuthTokenSerializer
         user = request.user
 
         if not user.is_admin():
             return self.error('一般用户没有权限创建题目')
 
-        data = {'title': request.POST.get('title'),
-                'description': request.POST.get('description'),
-                'input': request.POST.get('input'),
-                'output': request.POST.get('output'),
-                'samples': request.POST.get('samples'),
-                'standard_time_limit': request.POST.get('standard_time_limit'),
-                'standard_memory_limit': request.POST.get('standard_memory_limit'),
-                'is_remote': False,
-                }
-
+        data = request.data
+        serializer = CreateProblemSerializer(data=data)
+        
+        if not serializer.is_valid():
+            return self.error(serializer.errors)
+        
+        data = serializer.data
+        
+        data["is_remote"] = False
+        
+        if data.get("tags"):
+            tags = data.pop('tags')
+            for tag in tags:
+                try:
+                    tag_obj = ProblemTag.objects.get(name=tag)
+                except ProblemTag.DoesNotExist:
+                    tag_obj = ProblemTag.objects.create(name=tag)
+                problem.tags.add(tag_obj)
+        
         problem = Problem.objects.create(**data)
         return self.success(ProblemSerializer(problem).data)
 

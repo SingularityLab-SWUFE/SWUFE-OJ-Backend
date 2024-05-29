@@ -60,6 +60,19 @@ class ProblemCreateAPITest(TestCase):
         self.assertEqual(data['title'], test_problem['title'])
         self.assertEqual(data['is_remote'], False)
 
+    def test_create_problem_validator(self):
+        self.url = reverse('create_problem')
+        self.client.token_auth(self.admin_user)
+
+        test_problem_2 = test_problem.copy()
+        # Ask for 2GB, NOT ALLOWED
+        test_problem_2['standard_memory_limit'] = 2048
+        encoded_data_2 = urllib.parse.urlencode(test_problem_2)
+        response = self.client.post(
+            self.url, encoded_data_2, content_type='application/x-www-form-urlencoded'
+        )
+        self.assertEqual(response.data['error'], 'error')
+
     def test_create_problem_no_permission(self):
         self.url = reverse('create_problem')
         self.client.token_auth(self.student)
@@ -185,7 +198,7 @@ class ProblemSetAPITest(TestCase):
         test_problem_2 = test_problem.copy()
         test_problem_2['title'] = 'new test problem'
         new_problem = Problem.objects.create(**test_problem_2)
-        
+
         request_data = json.dumps({'name': 'Updated problem set',
                                    'problem_set_id': problem_set.id,
                                    'problems': [self.problem.id, new_problem.id]})
@@ -196,11 +209,10 @@ class ProblemSetAPITest(TestCase):
         self.assertEqual(data['name'], 'Updated problem set')
         self.assertEqual(data['problems_included'], [
                          self.problem.id, new_problem.id])
-        
+
         # No permission to update
         user = User.objects.create(username='test2')
         self.client.token_auth(user)
         response = self.client.put(
             reverse('create_problem_set'), request_data, content_type='application/json')
         self.assertEqual(response.data['error'], 'error')
-        
