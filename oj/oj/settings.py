@@ -122,6 +122,9 @@ CACHES = {
     }
 }
 
+# https://github.com/django-ckeditor/django-ckeditor/issues/764
+
+SILENCED_SYSTEM_CHECKS = ["ckeditor.W001"]
 
 # Dramatiq settings
 # https://github.com/Bogdanp/django_dramatiq
