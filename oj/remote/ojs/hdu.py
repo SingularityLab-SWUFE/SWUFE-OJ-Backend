@@ -182,9 +182,10 @@ class HDUSender(RequestSender):
             "total_submission_number": submission_statistics[4],
             "solved_submission_number": submission_statistics[5],
             "standard_time_limit": submission_statistics[1],
-            "standard_memory_limit": submission_statistics[3],
+            # hdu uses kb, convert to mb
+            "standard_memory_limit": submission_statistics[3] // 1024,
             "other_time_limit": submission_statistics[0],
-            "other_memory_limit": submission_statistics[2],
+            "other_memory_limit": submission_statistics[2] // 1024,
             "description": problem_description,
             "input": input_description,
             "output": output_description,
