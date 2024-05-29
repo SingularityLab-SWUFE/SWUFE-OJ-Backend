@@ -61,7 +61,7 @@ class SubmissionTest(TestCase, TestCaseZipProcessor):
         self.assertIsNone(response.data['error'])
         data = response.data['data']
         self.assertEqual(data['username'], self.user.username)
-        self.assertEqual(data['result'], JudgeStatus.ACCEPTED)
+        self.assertEqual(data['result'], JudgeStatus.PENDING)
 
     def test_compile_error(self):
         pass

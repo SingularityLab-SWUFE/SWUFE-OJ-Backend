@@ -1,5 +1,6 @@
 from .models import Submission, JudgeStatus
 from .serializers import SubmissionSerializer, SubmissionDisplaySerializer
+from .tasks import judge
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -57,48 +58,20 @@ class MakeSubmissionAPI(APIView):
         language = request.POST.get('language')
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]  # 使用代理获取真实的ip
+            ip = x_forwarded_for.split(',')[0]
         else:
-            ip = request.META.get('REMOTE_ADDR')  # 未使用代理获取IP
+            ip = request.META.get('REMOTE_ADDR')
 
+        submission = Submission.objects.create(
+            problem=problem, username=user.username, code=code,
+            language=language, result=JudgeStatus.PENDING, ip=ip)
+        
         if not problem.is_remote:
-            client = JudgeServerClient(token=settings.JUDGE_SERVER_TOKEN,
-                                       server_base_url=f"http://{settings.JUDGE_SERVER_HOST}:{settings.JUDGE_SERVER_PORT}")
-
-            language_config = LANGUAGE_CONFIG.get(language)
-
-            if language == 'C++' or language == 'C':
-                time_limit = problem.standard_time_limit
-                # JudgeServer uses memory limit in Byte
-                memory_limit = problem.standard_memory_limit * 1024 * 1024
-            else:
-                time_limit = problem.other_time_limit
-                memory_limit = problem.other_memory_limit * 1024 * 1024
-
-            data = client.judge(src=code, language_config=language_config,
-                                max_cpu_time=time_limit, max_memory=memory_limit,
-                                test_case_id=problem.test_case_id, output=True)
-            if data['err'] == 'CompileError':
-                # TODO: handle compile error
-                pass
-
-            test_case_results = data['data']
-
-            status = JudgeStatus.PENDING
-            error_info = ""
-            for result in test_case_results:
-                if result['result'] != JudgeStatus.ACCEPTED:
-                    error_info = f'Failed on test {result['test_case']}'
-                    status = result['result']
-            # if all test cases passed, status is ACCEPTED
-            if status == JudgeStatus.PENDING:
-                status = JudgeStatus.ACCEPTED
+            # background task for judge
+            judge.send(submission.id, int(problem_id))
         else:
             # TODO: remote judge
             pass
 
-        submission = Submission.objects.create(
-            problem=problem, username=user.username, code=code,
-            language=language, result=status, info=test_case_results, ip=ip)
         serializer = SubmissionDisplaySerializer(submission)
         return self.success(serializer.data)

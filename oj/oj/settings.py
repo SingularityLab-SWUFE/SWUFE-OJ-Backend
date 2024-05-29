@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'rest_framework.authtoken',
     'rest_framework',
+    "django_dramatiq",
     # modules
     'account',
     'problem',
@@ -122,6 +123,52 @@ CACHES = {
 }
 
 
+# Dramatiq settings
+# https://github.com/Bogdanp/django_dramatiq
+
+DRAMATIQ_BROKER = {
+    "BROKER": "dramatiq.brokers.redis.RedisBroker",
+    "OPTIONS": {
+        # "url": os.getenv('REDIS_LOCATION'),
+        "host": os.getenv('REDIS_HOST'),
+        "port": os.getenv('REDIS_PORT'),
+        "db": 0,
+        "password": os.getenv('REDIS_PASSWORD')
+    },
+    "MIDDLEWARE": [
+        "dramatiq.middleware.Prometheus",
+        "dramatiq.middleware.AgeLimit",
+        "dramatiq.middleware.TimeLimit",
+        "dramatiq.middleware.Callbacks",
+        "dramatiq.middleware.Retries",
+        "django_dramatiq.middleware.DbConnectionsMiddleware",
+        "django_dramatiq.middleware.AdminMiddleware",
+    ]
+}
+
+# Defines which database should be used to persist Task objects when the
+# AdminMiddleware is enabled.  The default value is "default".
+
+DRAMATIQ_TASKS_DATABASE = "default"
+
+
+DRAMATIQ_RESULT_BACKEND = {
+    "BACKEND": "dramatiq.results.backends.redis.RedisBackend",
+    "BACKEND_OPTIONS": {
+        "host": os.getenv('REDIS_HOST'),
+        "port": os.getenv('REDIS_PORT'),
+        "db": 0,
+        "password": os.getenv('REDIS_PASSWORD')
+    },
+    "MIDDLEWARE_OPTIONS": {
+        "result_ttl": None
+    }
+}
+
+
+DRAMATIQ_AUTODISCOVER_MODULES = ["tasks"]
+
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -193,5 +240,5 @@ JUDGE_SERVER_PORT = os.getenv('JUDGE_SERVER_PORT')
 
 JUDGE_SERVER_TEST_CASE_DIR = os.getenv('JUDGE_SERVER_TEST_CASE_DIR')
 
-TEST_CASE_DIR = os.getenv('TEST_CASE_DIR') # Temporary directory for test cases
-
+# Temporary directory for test cases
+TEST_CASE_DIR = os.getenv('TEST_CASE_DIR')
