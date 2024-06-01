@@ -1,6 +1,9 @@
 from submission.models import Submission, JudgeStatus
+from account.models import User, UserProfile
 from problem.models import Problem
+from contest.models import Contest, ContestStatus, ContestType, ACMContestRank, OIContestRank
 from django.conf import settings
+from django.db import transaction
 
 from .client import JudgeServerClient, JudgeServerClientError
 from .config import LANGUAGE_CONFIG
@@ -52,14 +55,14 @@ class JudgerDispatcher:
 
         Submission.objects.filter(id=self.submission.id).update(
             result=JudgeStatus.JUDGING)
-        
+
         logger.info('Sending judge request to judge server...')
         # JSON response from judge server
         resp = self.client.judge(**judge_data)
-        
+
         # for debug
         # logger.info(f'Judge server sent with response: {resp}')
-        
+
         if not resp or resp["err"] == "JudgeClientError":
             self.submission.result = JudgeStatus.SYSTEM_ERROR
             return
@@ -84,10 +87,13 @@ class JudgerDispatcher:
             self.submission.result = error_test_cases[0]['result']
 
         self.submission.save()
-        logger.info(f'Judge result: {self.submission.result} have beem saved.')
+        logger.info(f'Judge result: {self.submission.result} has been saved.')
 
-        # TODO: handle rank update for contest
-        pass
+        self._update_status()
+
+        if self.contest_id:
+            with transaction.atomic():
+                self._update_contest_rank()
 
     def _get_statistic_info(self, data: list[dict]):
         self.submission.statistic_info["time_cost"] = max(
@@ -96,4 +102,71 @@ class JudgerDispatcher:
             [x["memory"] for x in data])
 
         # TODO: calculate score for OI mode
+        pass
+
+    def _update_status(self):
+
+        with transaction.atomic():
+            # Update problem status
+            problem = Problem.objects.select_for_update().get(id=self.problem.id)
+            problem.total_submission_number += 1
+            if self.submission.result == JudgeStatus.ACCEPTED:
+                problem.solved_submission_number += 1
+
+            problem.save(update_fields=[
+                         'total_submission_number', 'solved_submission_number'])
+
+            # Update user status
+            user = User.objects.select_for_update().get(id=self.submission.user_id)
+            user_profile: UserProfile = user.userprofile
+
+            user_profile.total_submission_number += 1
+            if self.submission.result == JudgeStatus.ACCEPTED:
+                user_profile.total_accepted_number += 1
+                # only count for the first AC
+                if user_profile.total_accepted_number == 1:
+                    user_profile.solved_problem_number += 1
+            user_profile.save(
+                update_fields=['total_submission_number', 'total_accepted_number', 'solved_problem_number'])
+
+    def _update_contest_rank(self):
+        if self.contest.rule_type == 'ACM':
+            self._update_acm_rank()
+
+        elif self.contest.rule_type == 'OI':
+            self._update_oi_rank()
+
+    def _update_acm_rank(self):
+        rank = ACMContestRank.objects.select_for_update().get(
+            user_id=self.submission.user_id, contest=self.contest)
+
+        info = rank.submission_info.get(str(self.submission.problem_id), {
+            'accepted': False,
+            'ac_time': 0,
+            'failed_number': 0,
+            'is_first_ac': False,
+        })
+        rank.submission_number += 1
+
+        # If accepted, do nothing
+        if info['accepted']:
+            return
+        if self.submission.result == JudgeStatus.ACCEPTED:
+            info['accepted'] = True
+            info['ac_time'] = (self.submission.create_time -
+                               self.contest.start_time).total_seconds()
+            # penalty for each wrong submission is 20 mins
+            rank.total_time += info['ac_time'] + \
+                info['failed_number'] * 20 * 60
+
+            if self.problem.solved_submission_number == 1:
+                info['is_first_ac'] = True
+        else:
+            info['failed_number'] += 1
+
+        rank.submission_info[str(self.submission.problem_id)] = info
+        rank.save()
+
+    # TODO: update OI rank
+    def _update_oi_rank(self):
         pass

@@ -39,3 +39,10 @@ class ACMContestRankSerializer(ContestSerializer):
     class Meta:
         model = ACMContestRank
         fields = '__all__'
+
+
+class OIContestRankSerializer(ContestSerializer):
+    
+    class Meta:
+        model = OIContestRank
+        fields = '__all__'

@@ -1,13 +1,15 @@
 import os
 import urllib.parse
-from django.test import TestCase
+import dramatiq
+from django.test import TestCase, TransactionTestCase
 from rest_framework.reverse import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from utils.api import APIClient
 from problem.models import Problem
-from account.models import User
+from account.models import User, UserProfile
 from .models import Submission, JudgeStatus
+from .tasks import judge
 
 from problem.utils import create_test_case_zip, TestCaseZipProcessor
 
@@ -35,7 +37,7 @@ testcase = [
 ]
 
 
-class SubmissionTest(TestCase, TestCaseZipProcessor):
+class SubmissionTest(TransactionTestCase, TestCaseZipProcessor):
     def setUp(self):
         # create example problem
         self.filename = 'test.zip'
@@ -48,9 +50,15 @@ class SubmissionTest(TestCase, TestCaseZipProcessor):
         self.rsync_test_cases(test_case_id)
 
         self.user = User.objects.create(username='test')
+        self.user_profile = UserProfile.objects.create(user=self.user)
+        
         self.client = APIClient()
         self.client.token_auth(self.user)
         self.url = reverse('submit')
+        # dramatiq setup
+        self.broker = dramatiq.get_broker()
+        self.worker = dramatiq.Worker(self.broker, worker_timeout=1000)
+        self.worker.start()
 
     def test_submit_cpp_code(self):
         body = {"code": cpp_code, "problem_id": self.problem.id, "language": "C++"}
@@ -62,6 +70,14 @@ class SubmissionTest(TestCase, TestCaseZipProcessor):
         data = response.data['data']
         self.assertEqual(data['username'], self.user.username)
         self.assertEqual(data['result'], JudgeStatus.PENDING)
+
+        self.broker.join(judge.queue_name)
+        self.worker.join()
+
+        submission = Submission.objects.get(id=data['id'])
+        self.assertEqual(submission.result, JudgeStatus.ACCEPTED)
+        self.user_profile.refresh_from_db()
+        self.assertEqual(self.user.userprofile.solved_problem_number, 1)
 
     def test_compile_error(self):
         pass
@@ -75,3 +91,4 @@ class SubmissionTest(TestCase, TestCaseZipProcessor):
     def tearDown(self):
         os.remove(self.filename)
         self.rsync_test_cases(self.problem.test_case_id, delete=True)
+        self.worker.stop()

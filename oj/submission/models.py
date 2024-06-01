@@ -1,6 +1,7 @@
 from django.db import models
 from problem.models import Problem
 from contest.models import Contest
+from account.models import User
 
 class JudgeStatus:
     COMPILE_ERROR = -2
@@ -21,7 +22,7 @@ class Submission(models.Model):
     contest = models.ForeignKey(Contest, on_delete=models.CASCADE, null=True)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     create_time = models.DateTimeField(auto_now_add=True)
-    username = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     code = models.TextField()
     result = models.IntegerField(db_index=True, default=JudgeStatus.PENDING)
     # 从 JudgeServer 返回的判题详情

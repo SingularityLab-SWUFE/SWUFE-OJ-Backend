@@ -57,6 +57,10 @@ class UserProfile(models.Model):
     school = models.TextField(null=True)
     major = models.TextField(null=True)
     language = models.TextField(null=True)
+    total_submission_number = models.IntegerField(default=0)
+    total_accepted_number = models.IntegerField(default=0)
+    # Re-accepted submission will not count
+    solved_problem_number = models.IntegerField(default=0)
 
     @property
     def username(self):

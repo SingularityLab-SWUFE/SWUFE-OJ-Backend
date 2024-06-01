@@ -10,6 +10,7 @@ from .models import Contest, ACMContestRank, OIContestRank, ContestStatus
 from .serializers import (ContestSerializer,
                           ContestAdminSerializer,
                           ACMContestRankSerializer,
+                          OIContestRankSerializer,
                           CreateContestSerializer)
 
 
@@ -153,6 +154,11 @@ class ContestRankAPI(APIView):
                 ranks = ACMContestRank.objects.filter(
                     contest=contest).order_by('-accepted_number', 'total_time')
                 serializers = ACMContestRankSerializer(ranks, many=True)
+                return self.success(serializers.data)
+            elif rule_type == "OI":
+                ranks = OIContestRank.objects.filter(
+                    contest=contest).order_by('-total_score')
+                serializers = OIContestRankSerializer(ranks, many=True)
                 return self.success(serializers.data)
         except Contest.DoesNotExist:
             return self.error("Contest does not exist")

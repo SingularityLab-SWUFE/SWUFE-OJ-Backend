@@ -69,4 +69,4 @@ jobs:
         cd oj
         python manage.py makemigrations
         python manage.py migrate
-        python manage.py test --noinput
+        python manage.py test --noinput --settings=oj.settings_test

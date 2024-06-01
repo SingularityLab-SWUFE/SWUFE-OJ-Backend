@@ -63,7 +63,7 @@ class MakeSubmissionAPI(APIView):
             ip = request.META.get('REMOTE_ADDR')
 
         submission = Submission.objects.create(
-            problem=problem, username=user.username, code=code,
+            problem=problem, user=user, code=code,
             language=language, result=JudgeStatus.PENDING, ip=ip)
         
         if not problem.is_remote:
