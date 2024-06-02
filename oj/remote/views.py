@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from utils.token import JWTAuthTokenSerializer
 from utils.api import APIView
 from problem.serializers import ProblemSerializer
-from .hdu import HDUSender
+from .ojs.hdu import HDUSender
 
 class RemoteProblemAPI(APIView):
     '''

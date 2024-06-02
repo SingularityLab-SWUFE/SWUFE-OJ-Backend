@@ -1,16 +1,18 @@
-from django.http import HttpResponse
-from .models import Problem, ProblemTag
-from .serializers import ProblemSerializer, ProblemListSerializer, TestCaseUploadForm
+from .models import Problem, ProblemTag, ProblemSet
+from .serializers import (ProblemSerializer, ProblemListSerializer,
+                          ProblemSetSerializer, CreateProblemSerializer,
+                          TestCaseUploadForm)
 from .utils import TestCaseZipProcessor, rand_str
 
 from django.shortcuts import get_object_or_404, render
 from django.db.models import Q
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-
+from contest.models import Contest
 from utils.templates import markdown_format
 from utils.token import JWTAuthTokenSerializer
-from utils.api import APIView, CSRFExemptAPIView
+from utils.api import APIView, CSRFExemptAPIView, validate_serializer
 
 
 class ProblemAPI(APIView):
@@ -33,9 +35,23 @@ class ProblemListAPI(APIView):
         source = request.query_params.get('source', None)
         difficulty = request.query_params.get('difficulty', None)
         keyword = request.query_params.get('keyword', None)
+        contest_id = request.query_params.get('contest_id', None)
+        problem_set_id = request.query_params.get('problem_set_id', None)
+        page = request.query_params.get('page', 1)
 
         problems = Problem.objects.all()
-
+        if contest_id:
+            try:
+                contest = Contest.objects.get(id=contest_id)
+                problems = problems.filter(contest=contest)
+            except Contest.DoesNotExist:
+                pass
+        if problem_set_id:
+            try:
+                problem_set = ProblemSet.objects.get(id=problem_set_id)
+                problems = problems.filter(problem_set=problem_set)
+            except ProblemSet.DoesNotExist:
+                pass
         if is_remote:
             problems = problems.filter(is_remote=True)
         if source:
@@ -46,7 +62,14 @@ class ProblemListAPI(APIView):
             problems = problems.filter(
                 Q(title__icontains=keyword) | Q(description__icontains=keyword))
             # or problems = problems.filter(description__icontains=keyword)
-
+        paginator = Paginator(problems, 10)
+        try:
+            problems = paginator.page(page)
+        except PageNotAnInteger:
+            problems = paginator.page(1)
+        except EmptyPage:
+            problems = paginator.page(paginator.num_pages)
+            
         serializer = ProblemListSerializer(problems, many=True)
         return self.success(serializer.data)
 
@@ -100,25 +123,75 @@ class ProblemCreateAPI(APIView):
     authentication_classes = [JWTAuthTokenSerializer]
 
     def post(self, request):
-        # User object is passed by JWTAuthTokenSerializer
         user = request.user
 
         if not user.is_admin():
             return self.error('一般用户没有权限创建题目')
 
-        data = {'title': request.POST.get('title'),
-                'description': request.POST.get('description'),
-                'input': request.POST.get('input'),
-                'output': request.POST.get('output'),
-                'samples': request.POST.get('samples'),
-                'standard_time_limit': request.POST.get('standard_time_limit'),
-                'standard_memory_limit': request.POST.get('standard_memory_limit'),
-                'is_remote': False,
-                }
-
+        data = request.data
+        serializer = CreateProblemSerializer(data=data)
+        
+        if not serializer.is_valid():
+            return self.error(serializer.errors)
+        
+        data = serializer.data
+        
+        data["is_remote"] = False
+        
+        if data.get("tags"):
+            tags = data.pop('tags')
+            for tag in tags:
+                try:
+                    tag_obj = ProblemTag.objects.get(name=tag)
+                except ProblemTag.DoesNotExist:
+                    tag_obj = ProblemTag.objects.create(name=tag)
+                problem.tags.add(tag_obj)
+        
         problem = Problem.objects.create(**data)
         return self.success(ProblemSerializer(problem).data)
 
+
+class ProblemSetCreateAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthTokenSerializer]
+    
+    def post(self, request):
+        name = request.data.get('name')
+        description = request.data.get('description')
+        problems = request.data.get('problems')
+        problem_set = ProblemSet.objects.create(
+            name=name,
+            description=description,
+            created_by=request.user
+        )
+        for problem_id in problems:
+            problem = Problem.objects.get(id=problem_id)
+            problem_set.problems_included.add(problem)
+        return self.success(ProblemSetSerializer(problem_set).data)
+
+    def put(self, request):
+        problem_set_id = request.data.get('problem_set_id')
+        try:
+            problem_set = ProblemSet.objects.get(id=problem_set_id)
+        except ProblemSet.DoesNotExist:
+            return self.error('Problem set does not exist')
+        user = request.user
+        if user != problem_set.created_by:
+            return self.error('You are not the creator of this problem set')
+        
+        data = request.data
+        
+        for k, v in data.items():
+            setattr(problem_set, k, v)
+        
+        problems = request.data.get('problems')
+        problem_set.problems_included.clear()
+        for problem_id in problems:
+            problem = Problem.objects.get(id=problem_id)
+            problem_set.problems_included.add(problem)
+        
+        problem_set.save()
+        return self.success(ProblemSetSerializer(problem_set).data)
 
 def problem_display(request, id):
     problem = Problem.objects.get(id=id)

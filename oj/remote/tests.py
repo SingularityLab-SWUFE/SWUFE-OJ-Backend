@@ -1,7 +1,7 @@
 from django.test import TestCase
 from problem.models import Problem
 
-from .hdu import HDUSender
+from .ojs.hdu import HDUSender
 
 sample_code = r'''#include <iostream>
 using namespace std;

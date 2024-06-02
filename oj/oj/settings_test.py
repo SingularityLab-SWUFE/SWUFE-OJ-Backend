@@ -130,24 +130,38 @@ SILENCED_SYSTEM_CHECKS = ["ckeditor.W001"]
 # https://github.com/Bogdanp/django_dramatiq
 
 DRAMATIQ_BROKER = {
-    "BROKER": "dramatiq.brokers.redis.RedisBroker",
-    "OPTIONS": {
-        # "url": os.getenv('REDIS_LOCATION'),
-        "host": os.getenv('REDIS_HOST'),
-        "port": os.getenv('REDIS_PORT'),
-        "db": 0,
-        "password": os.getenv('REDIS_PASSWORD')
-    },
+    "BROKER": "dramatiq.brokers.stub.StubBroker",
+    "OPTIONS": {},
     "MIDDLEWARE": [
-        "dramatiq.middleware.Prometheus",
         "dramatiq.middleware.AgeLimit",
         "dramatiq.middleware.TimeLimit",
         "dramatiq.middleware.Callbacks",
+        "dramatiq.middleware.Pipelines",
         "dramatiq.middleware.Retries",
         "django_dramatiq.middleware.DbConnectionsMiddleware",
         "django_dramatiq.middleware.AdminMiddleware",
     ]
 }
+
+# DRAMATIQ_BROKER = {
+#     "BROKER": "dramatiq.brokers.redis.RedisBroker",
+#     "OPTIONS": {
+#         # "url": os.getenv('REDIS_LOCATION'),
+#         "host": os.getenv('REDIS_HOST'),
+#         "port": os.getenv('REDIS_PORT'),
+#         "db": 0,
+#         "password": os.getenv('REDIS_PASSWORD')
+#     },
+#     "MIDDLEWARE": [
+#         "dramatiq.middleware.Prometheus",
+#         "dramatiq.middleware.AgeLimit",
+#         "dramatiq.middleware.TimeLimit",
+#         "dramatiq.middleware.Callbacks",
+#         "dramatiq.middleware.Retries",
+#         "django_dramatiq.middleware.DbConnectionsMiddleware",
+#         "django_dramatiq.middleware.AdminMiddleware",
+#     ]
+# }
 
 # Defines which database should be used to persist Task objects when the
 # AdminMiddleware is enabled.  The default value is "default".

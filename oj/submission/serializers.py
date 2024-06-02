@@ -12,7 +12,8 @@ class SubmissionDisplaySerializer(serializers.ModelSerializer):
 
     problem_title = serializers.CharField(
         source='problem.title', read_only=True)
-
+    username = serializers.CharField(source='user.username', read_only=True)
+    
     class Meta:
         model = Submission
         fields = ['id', 'create_time', 'username',

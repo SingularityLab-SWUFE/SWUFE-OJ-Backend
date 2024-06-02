@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
 
 jobs:
   build:
@@ -54,6 +54,8 @@ jobs:
         echo 'SQL_PORT=${{ secrets.SQL_PORT }}' >> .env
         echo 'HDU_ACCOUNT=${{ secrets.HDU_ACCOUNT }}' >> .env
         echo 'HDU_PASSWORD=${{ secrets.HDU_PASSWORD }}' >> .env
+        echo 'REDIS_HOST=${{ secrets.REDIS_HOST }}' >> .env
+        echo 'REDIS_PORT=${{ secrets.REDIS_PORT }}' >> .env
         echo 'REDIS_LOCATION=${{ secrets.REDIS_LOCATION }}' >> .env
         echo 'REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}' >> .env
         echo 'JUDGE_SERVER_TOKEN=${{ secrets.JUDGE_SERVER_TOKEN }}' >> .env
@@ -69,4 +71,4 @@ jobs:
         cd oj
         python manage.py makemigrations
         python manage.py migrate
-        python manage.py test --noinput
+        python manage.py test --noinput --settings=oj.settings_test

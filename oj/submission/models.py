@@ -1,5 +1,7 @@
 from django.db import models
 from problem.models import Problem
+from contest.models import Contest
+from account.models import User
 
 
 class JudgeStatus:
@@ -18,9 +20,10 @@ class JudgeStatus:
 
 class Submission(models.Model):
     id = models.AutoField(primary_key=True)
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, null=True)
     problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
     create_time = models.DateTimeField(auto_now_add=True)
-    username = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     code = models.TextField()
     result = models.IntegerField(db_index=True, default=JudgeStatus.PENDING)
     # 从 JudgeServer 返回的判题详情
@@ -43,4 +46,4 @@ class Submission(models.Model):
         ordering = ('-create_time',)
 
     def __str__(self):
-        return self.id
+        return f'Submission {self.id}: {self.problem.title} submitted by {self.user.username}, status: {self.result}'
