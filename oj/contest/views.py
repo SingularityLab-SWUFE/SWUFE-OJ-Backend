@@ -1,7 +1,6 @@
 import dateutil.parser
 from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
-
 from utils.api import APIView
 from utils.token import JWTAuthTokenSerializer
 from account.models import User
@@ -12,6 +11,7 @@ from .serializers import (ContestSerializer,
                           ACMContestRankSerializer,
                           OIContestRankSerializer,
                           CreateContestSerializer)
+
 
 
 class ContestViewAPI(APIView):
@@ -65,6 +65,7 @@ class ContestRegisterAPI(APIView):
         
         rank = rank_model.objects.create(user=user, contest=contest)
         return self.success(serializer_model(rank).data)
+
 
 
 class ContestAdminAPI(APIView):
@@ -170,3 +171,4 @@ class ContestRankAPI(APIView):
                 return self.success(serializers.data)
         except Contest.DoesNotExist:
             return self.error("Contest does not exist")
+

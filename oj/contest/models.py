@@ -28,6 +28,7 @@ class Contest(models.Model):
     last_update_time = models.DateTimeField(auto_now=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     visible = models.BooleanField(default=True)
+
     contest_type = models.CharField(default=ContestType.TRAINING, max_length=50)
 
 
@@ -43,6 +44,7 @@ class Contest(models.Model):
     def _force_end(self):
         self.end_time = timezone.now()
         self.save()
+    
     
     class Meta:
         db_table = "contest"
@@ -63,6 +65,7 @@ class ACMContestRank(ContestRank):
     # total_time is only for ACM contest, total_time =  ac time + none-ac times * 20 * 60
     total_time = models.IntegerField(default=0)
     # {"23": {"accepted": True, "ac_time": 8999, "failed_number": 2, "is_first_ac": True}}
+
     # key is problem id
     submission_info = models.JSONField(default=dict)
 
