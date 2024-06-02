@@ -18,22 +18,25 @@ class JudgerDispatcher:
         Dispatch the submission to the judge servers and return the result.
     '''
 
-    def __init__(self, submission_id, problem_id):
+    def __init__(self, submission_id, problem_id, contest_id=None):
         self.submission = Submission.objects.get(id=submission_id)
-        self.contest_id = self.submission.contest_id
-
+        self.contest_id = contest_id
+        self.problem = Problem.objects.get(id=problem_id)
         if self.contest_id:
-            self.problem = Problem.objects.select_related('contest').get(
-                id=problem_id, contest__id=self.contest_id)
-            self.contest = self.problem.contest
+            self.contest = Contest.objects.get(id=contest_id)
         else:
-            self.problem = Problem.objects.get(id=problem_id)
-
+            self.contest = None
+        
+        # TODO: support multiple servers
         self.client = JudgeServerClient(
             token=settings.JUDGE_SERVER_TOKEN,
             server_base_url=f"http://{settings.JUDGE_SERVER_HOST}:{settings.JUDGE_SERVER_PORT}")
 
     def judge(self):
+        '''
+            Send submission to judge server and update status.
+            If submission is in a contest, update the rank of the user.
+        '''
         code = self.submission.code
         language = self.submission.language
         language_config = LANGUAGE_CONFIG.get(language)
@@ -115,6 +118,7 @@ class JudgerDispatcher:
 
             problem.save(update_fields=[
                          'total_submission_number', 'solved_submission_number'])
+            self.problem = problem
 
             # Update user status
             user = User.objects.select_for_update().get(id=self.submission.user_id)
@@ -152,6 +156,7 @@ class JudgerDispatcher:
         if info['accepted']:
             return
         if self.submission.result == JudgeStatus.ACCEPTED:
+            rank.accepted_number += 1
             info['accepted'] = True
             info['ac_time'] = (self.submission.create_time -
                                self.contest.start_time).total_seconds()

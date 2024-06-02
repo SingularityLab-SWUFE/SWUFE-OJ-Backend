@@ -3,6 +3,7 @@ from problem.models import Problem
 from contest.models import Contest
 from account.models import User
 
+
 class JudgeStatus:
     COMPILE_ERROR = -2
     WRONG_ANSWER = -1
@@ -45,4 +46,4 @@ class Submission(models.Model):
         ordering = ('-create_time',)
 
     def __str__(self):
-        return self.id
+        return f'Submission {self.id}: {self.problem.title} submitted by {self.user.username}, status: {self.result}'
