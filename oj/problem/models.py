@@ -62,6 +62,7 @@ class ProblemSet(models.Model):
     created_date = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     last_update = models.DateTimeField(auto_now=True, verbose_name="最近更新时间")
     problems_included = models.ManyToManyField(Problem, related_name='included_in', verbose_name="包含的题目")
+    visible = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
