@@ -38,6 +38,7 @@ class ContestViewAPI(APIView):
 
 class ContestRegisterAPI(APIView):
 
+    request_parsers = ()
     permission_classes = [IsAuthenticated]
     authentication_classes = [JWTAuthTokenSerializer]
 
@@ -52,13 +53,18 @@ class ContestRegisterAPI(APIView):
                 return self.error("Contest has ended")
             rule_type = contest.rule_type
             if rule_type == "ACM":
-                ACMContestRank.objects.create(user=user, contest=contest)
+                rank_model = ACMContestRank
+                serializer_model = ACMContestRankSerializer
             elif rule_type == "OI":
-                OIContestRank.objects.create(user=user, contest=contest)
+                rank_model = OIContestRank
+                serializer_model = OIContestRankSerializer
             else:
                 return self.error("Unsupported rule type")
         except Contest.DoesNotExist:
             return self.error("Contest does not exist")
+        
+        rank = rank_model.objects.create(user=user, contest=contest)
+        return self.success(serializer_model(rank).data)
 
 
 class ContestAdminAPI(APIView):
@@ -91,6 +97,9 @@ class ContestAdminAPI(APIView):
             "created_by": user,
             "contest_type": data["contest_type"]
         }
+        
+        contest = Contest.objects.create(**info)
+        
         if info['contest_type'] == 'training':
             problem_set_id = data.get("problem_set_id")
             if problem_set_id is None:
@@ -100,10 +109,9 @@ class ContestAdminAPI(APIView):
                 problem_set = ProblemSet.objects.get(id=problem_set_id)
             except ProblemSet.DoesNotExist:
                 return self.error("Problem set does not exist.")
-
-        contest = Contest.objects.create(**info)
-        problem_set.contest = contest
-        problem_set.save()
+            
+            problem_set.contest = contest
+            problem_set.save()
 
         return self.success(CreateContestSerializer(contest).data)
 

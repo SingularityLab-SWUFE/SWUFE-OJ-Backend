@@ -11,11 +11,12 @@ class CreateContestSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=128, required=False)
     rule_type = serializers.ChoiceField(choices=['ACM', 'OI'])
     visible = serializers.BooleanField(default=True)
+    contest_type = serializers.CharField(max_length=128)
 
     class Meta:
         model = Contest
-        fields = ('title', 'description', 'start_time',
-                  'end_time', 'password', 'rule_type', 'visible')
+        fields = ('title', 'description', 'start_time', 'id',
+                  'end_time', 'password', 'rule_type', 'visible', 'contest_type')
 
 
 class ContestAdminSerializer(serializers.ModelSerializer):
@@ -34,15 +35,18 @@ class ContestSerializer(ContestAdminSerializer):
         exclude = ('password', 'visible')
 
 
-class ACMContestRankSerializer(ContestSerializer):
+class ACMContestRankSerializer(serializers.ModelSerializer):
+
+    username = serializers.CharField(source='user.username')
 
     class Meta:
         model = ACMContestRank
-        fields = '__all__'
+        fields = ('username', 'submission_number',
+                  'accepted_number', 'total_time', 'submission_info', 'contest')
 
 
-class OIContestRankSerializer(ContestSerializer):
-    
+class OIContestRankSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = OIContestRank
         fields = '__all__'

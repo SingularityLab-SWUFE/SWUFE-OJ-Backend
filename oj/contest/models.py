@@ -40,6 +40,10 @@ class Contest(models.Model):
         else:
             return ContestStatus.RUNNING
 
+    def _force_end(self):
+        self.end_time = timezone.now()
+        self.save()
+    
     class Meta:
         db_table = "contest"
         ordering = ("-start_time",)
